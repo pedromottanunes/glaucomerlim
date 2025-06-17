@@ -1,0 +1,20 @@
+{
+  "name": "Central de Controle",
+  "short_name": "Central",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3576f6",
+  "icons": [
+    {
+      "src": "https://drive.google.com/thumbnail?id=1EEc4LUVQG8YjoJYukOt8ACooDKalze1C",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://drive.google.com/thumbnail?id=1EEc4LUVQG8YjoJYukOt8ACooDKalze1C",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
