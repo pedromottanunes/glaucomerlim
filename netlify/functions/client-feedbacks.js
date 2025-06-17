@@ -2,7 +2,6 @@ const { google } = require('googleapis');
 
 // Configurações das planilhas
 const SPREADSHEET_ID = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
-const METRICS_SHEET_NAME = 'Métricas_Trafego_Pago';
 const FEEDBACKS_SHEET_NAME = 'Feedbacks_Clientes';
 
 // Função para autenticar com Google Sheets
@@ -22,31 +21,25 @@ async function getGoogleSheetsAuth() {
   }
 }
 
-// Função para adicionar dados de métricas à planilha
-async function addMetricsToSheet(metricsData) {
+// Função para adicionar feedback à planilha
+async function addFeedbackToSheet(feedbackData) {
   try {
     const auth = await getGoogleSheetsAuth();
     const sheets = google.sheets({ version: 'v4', auth });
     
     // Preparar os dados para inserção
     const values = [[
-      metricsData.clientId || '',
-      metricsData.clientName || '',
-      metricsData.dateReference || new Date().toISOString().split('T')[0],
-      metricsData.platform || 'Google Ads',
-      metricsData.impressions || 0,
-      metricsData.clicks || 0,
-      metricsData.conversions || 0,
-      metricsData.cost || 0,
-      metricsData.ctr || 0,
-      metricsData.conversionRate || 0,
-      metricsData.costPerConversion || 0,
-      new Date().toISOString()
+      feedbackData.clientId || '',
+      feedbackData.clientName || '',
+      feedbackData.feedbackDate || new Date().toISOString(),
+      feedbackData.feedbackSummary || '',
+      feedbackData.feedbackComplete || '',
+      feedbackData.source || 'WhatsApp_IA'
     ]];
     
     const request = {
       spreadsheetId: SPREADSHEET_ID,
-      range: `${METRICS_SHEET_NAME}!A:L`,
+      range: `${FEEDBACKS_SHEET_NAME}!A:F`,
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       resource: {
@@ -57,53 +50,43 @@ async function addMetricsToSheet(metricsData) {
     const response = await sheets.spreadsheets.values.append(request);
     return response.data;
   } catch (error) {
-    console.error('Erro ao adicionar métricas:', error);
+    console.error('Erro ao adicionar feedback:', error);
     throw error;
   }
 }
 
-// Função para buscar métricas de um cliente específico
-async function getMetricsByClient(clientId) {
+// Função para buscar feedbacks de um cliente específico
+async function getFeedbacksByClient(clientId) {
   try {
     const auth = await getGoogleSheetsAuth();
     const sheets = google.sheets({ version: 'v4', auth });
     
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${METRICS_SHEET_NAME}!A:L`
+      range: `${FEEDBACKS_SHEET_NAME}!A:F`
     });
     
     const rows = response.data.values;
     if (!rows || rows.length <= 1) {
-      return null; // Sem dados ou apenas cabeçalho
+      return []; // Sem dados ou apenas cabeçalho
     }
     
     // Filtrar dados pelo clientId
-    const clientMetrics = rows.slice(1).filter(row => row[0] === clientId);
+    const clientFeedbacks = rows.slice(1)
+      .filter(row => row[0] === clientId)
+      .map(row => ({
+        clientId: row[0],
+        clientName: row[1],
+        feedbackDate: row[2],
+        feedbackSummary: row[3],
+        feedbackComplete: row[4],
+        source: row[5]
+      }))
+      .sort((a, b) => new Date(b.feedbackDate) - new Date(a.feedbackDate)); // Mais recentes primeiro
     
-    if (clientMetrics.length === 0) {
-      return null;
-    }
-    
-    // Pegar a métrica mais recente (última linha)
-    const latestMetric = clientMetrics[clientMetrics.length - 1];
-    
-    return {
-      clientId: latestMetric[0],
-      clientName: latestMetric[1],
-      dateReference: latestMetric[2],
-      platform: latestMetric[3],
-      impressions: parseInt(latestMetric[4]) || 0,
-      clicks: parseInt(latestMetric[5]) || 0,
-      conversions: parseInt(latestMetric[6]) || 0,
-      cost: parseFloat(latestMetric[7]) || 0,
-      ctr: parseFloat(latestMetric[8]) || 0,
-      conversionRate: parseFloat(latestMetric[9]) || 0,
-      costPerConversion: parseFloat(latestMetric[10]) || 0,
-      lastUpdated: latestMetric[11]
-    };
+    return clientFeedbacks;
   } catch (error) {
-    console.error('Erro ao buscar métricas:', error);
+    console.error('Erro ao buscar feedbacks:', error);
     throw error;
   }
 }
@@ -137,26 +120,26 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Se for uma requisição POST (dados vindos do Make)
+    // Se for uma requisição POST (dados vindos do agente de IA)
     if (event.httpMethod === 'POST') {
       const data = JSON.parse(event.body);
       
-      console.log('Dados recebidos do Make:', data);
+      console.log('Feedback recebido do agente de IA:', data);
       
-      // Adicionar dados à planilha
-      await addMetricsToSheet(data);
+      // Adicionar feedback à planilha
+      await addFeedbackToSheet(data);
       
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({ 
-          message: "Métricas do Google Ads salvas com sucesso!",
+          message: "Feedback salvo com sucesso!",
           timestamp: new Date().toISOString()
         })
       };
     }
     
-    // Se for uma requisição GET (frontend buscando dados)
+    // Se for uma requisição GET (frontend buscando feedbacks)
     if (event.httpMethod === 'GET') {
       const clientId = event.queryStringParameters?.clientId;
       
@@ -170,27 +153,16 @@ exports.handler = async function(event, context) {
         };
       }
       
-      // Buscar métricas do cliente específico
-      const metrics = await getMetricsByClient(clientId);
-      
-      if (!metrics) {
-        return {
-          statusCode: 404,
-          headers,
-          body: JSON.stringify({ 
-            error: 'Nenhuma métrica encontrada para este cliente',
-            clientId: clientId
-          })
-        };
-      }
+      // Buscar feedbacks do cliente específico
+      const feedbacks = await getFeedbacksByClient(clientId);
       
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          data: metrics,
-          message: "Métricas do Google Ads obtidas com sucesso!"
+          data: feedbacks,
+          message: "Feedbacks obtidos com sucesso!"
         })
       };
     }
