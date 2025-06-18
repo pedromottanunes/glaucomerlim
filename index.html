@@ -118,14 +118,16 @@ feedbacksPanel.innerHTML = `
   <div class="feedback-list">
     ${result.data.map(f => `
       <div class="feedback-card">
-        <div class="feedback-date">${f.feedbackDate || ''}</div>
-        <div class="feedback-summary">${f.feedbackSummary || '-'}</div>
-        <div class="feedback-full">${f.feedbackComplete || ''}</div>
-        <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.source || ''}</div>
+        <div class="feedback-date">${f.dataFeedback ? new Date(f.dataFeedback).toLocaleString() : ''}</div>
+        <div class="feedback-summary">${f.resumoFeedback || '-'}</div>
+        <div class="feedback-full">${f.feedbackCompleto || ''}</div>
+        <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.fonte || ''}</div>
       </div>
     `).join('')}
   </div>
 `;
+
+
 
         } else {
           feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
