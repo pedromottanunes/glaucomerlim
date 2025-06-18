@@ -140,39 +140,37 @@
     }
   }
 
-  async function fetchFeedbacks(clientId) {
-    feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
-    try {
-      const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
-      const result = await resp.json();
-      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-        // Ordena os feedbacks da data mais recente para a mais antiga
-        result.data.sort((a, b) => {
-          if (!a.feedbackDate || !b.feedbackDate) return 0;
-          // Suporta formato dd/mm/yyyy ou yyyy-mm-dd
-          const dA = a.feedbackDate.includes('/') ? a.feedbackDate.split('/').reverse().join('-') : a.feedbackDate;
-          const dB = b.feedbackDate.includes('/') ? b.feedbackDate.split('/').reverse().join('-') : b.feedbackDate;
-          return new Date(dB) - new Date(dA);
-        });
-        feedbacksPanel.innerHTML = `
-          <div class="feedback-list">
-            ${result.data.map(f => `
-              <div class="feedback-card">
-                <div class="feedback-date">${f.feedbackDate || ''}</div>
-                <div class="feedback-summary">${f.feedbackSummary || '-'}</div>
-                <div class="feedback-full">${f.feedbackComplete || ''}</div>
-                <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.source || ''}</div>
-              </div>
-            `).join('')}
-          </div>
-        `;
-      } else {
-        feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
-      }
-    } catch {
-      feedbacksPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar feedbacks.</div>`;
+async function fetchFeedbacks(clientId) {
+  feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
+  try {
+    const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
+    const result = await resp.json();
+    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+      // Ordena do mais recente ao mais antigo, se desejar (usando Data_Feedback no formato DD/MM/AAAA)
+      result.data.sort((a, b) => {
+        const dA = a.Data_Feedback?.split('/').reverse().join('-') || '';
+        const dB = b.Data_Feedback?.split('/').reverse().join('-') || '';
+        return new Date(dB) - new Date(dA);
+      });
+      feedbacksPanel.innerHTML = `
+        <div class="feedback-list">
+          ${result.data.map(f => `
+            <div class="feedback-card">
+              <div class="feedback-date">${f.Data_Feedback || ''}</div>
+              <div class="feedback-summary">${f.Resumo_Feedback || '-'}</div>
+              <div class="feedback-full">${f.Feedback_Completo || ''}</div>
+              <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.Fonte || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
     }
+  } catch {
+    feedbacksPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar feedbacks.</div>`;
   }
+}
 
   // Handler do select
   selectClient.addEventListener('change', function() {
