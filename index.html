@@ -2,218 +2,157 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>FullJob Workspace</title>
+  <title>Central de Controle – GlaucoApp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:
-'Segoe UI'
-,Arial,sans-serif;background:#f8f9fa;min-height:100vh;display:flex;flex-direction:column}
-    .container{width:100%;max-width:375px;margin:0 auto 90px auto;flex:1;display:flex;flex-direction:column;align-items:center}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#f8f9fa;min-height:100vh;display:flex;flex-direction:column}
+    .container{width:100%;max-width:420px;margin:0 auto 60px auto;flex:1;display:flex;flex-direction:column;align-items:center}
     .settings-header{width:90%;display:flex;justify-content:space-between;align-items:center;margin:28px 0 18px}
     .settings-title{font-size:2rem;font-weight:600;color:#222}
     .profile-pic{width:38px;height:38px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px #e4e4e4}
-    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:90%;margin-bottom:32px}
-    .settings-card{background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(75,0,160,.07);padding:22px 0 12px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:box-shadow .13s}
-    .settings-card:hover{box-shadow:0 4px 18px rgba(75,0,160,.12)}
-    .icon{width:40px;height:40px;margin-bottom:12px;background:#7e44e6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem}
-    .label{font-size:1rem;font-weight:500;color:#252525;text-align:center}
-    .modal-bg{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.45);justify-content:center;align-items:center;z-index:99}
-    .modal-bg.open{display:flex}
-    .modal-main{background:#fff;padding:24px;border-radius:20px;box-shadow:0 2px 24px rgba(40,70,140,.15);max-width:95vw;width:320px;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative}
-    .close-btn{position:absolute;right:14px;top:14px;border:none;background:none;font-size:1.5rem;color:#888;cursor:pointer}
-    .btn{background:#3576f6;color:#fff;border:none;border-radius:18px;padding:10px 22px;font-size:1rem;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(53,118,246,.1)}
-    .btn:hover{background:#2254a6}
-    .status-msg{font-size:.95rem;color:#2254a6;text-align:center}
-    .metrics-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:16px}
-    .metric-card{background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;border:1px solid #e9ecef}
-    .metric-value{font-size:1.5rem;font-weight:600;color:#3576f6;margin-bottom:4px}
-    .metric-label{font-size:0.85rem;color:#6c757d;font-weight:500}
-    .loading{color:#6c757d;font-style:italic}
+    .dashboard-card{background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(75,0,160,.07);padding:22px 0 20px;display:flex;flex-direction:column;align-items:center;width:96%;margin:12px 0}
+    .select-label{font-size:1.06rem;font-weight:500;color:#2e3e66;margin-bottom:8px;}
+    select{padding:7px 14px;font-size:1.01rem;border-radius:8px;border:1.4px solid #e0e5ee;margin-bottom:12px;}
+    .metrics-container{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:98%;margin:0 auto}
+    .metric-card{background:#f8f9fa;border-radius:12px;padding:13px 8px;text-align:center;border:1px solid #e9ecef}
+    .metric-value{font-size:1.35rem;font-weight:600;color:#3576f6;margin-bottom:2px}
+    .metric-label{font-size:0.92rem;color:#5c6c80;font-weight:500}
+    .loading{color:#7c829a;font-style:italic}
+    .feedbacks-title{font-size:1.07rem;color:#3576f6;font-weight:600;margin-bottom:6px}
+    .feedback-list{width:96%;max-height:170px;overflow-y:auto;margin-bottom:2px}
+    .feedback-card{background:#f3f7fa;border-radius:11px;padding:12px 10px;margin-bottom:8px;border:1px solid #e0e6ef}
+    .feedback-date{font-size:0.91rem;color:#7988a6}
+    .feedback-summary{font-size:1.06rem;color:#222;font-weight:500;margin:3px 0 0 0}
+    .feedback-full{font-size:0.97rem;color:#454c58;margin-top:2px}
+    @media(max-width:470px){.container{max-width:99vw;}}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
   <div class="container">
-   <div class="settings-header">
-  <span class="settings-title">Painel de Controle</span>
-  <div id="logoArea" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">
-    <img id="profileLogo" class="profile-pic" src="https://drive.google.com/thumbnail?id=1xG9c2LJaXOM6O6vLhU-8zt_rTl272tbg" alt="Logo">
-  </div>
-</div>
-
-    <div class="settings-grid">
-      <div class="settings-card" id="cardGoogleAds">
-        <div class="icon">📊</div><div class="label">Métricas Google ADS</div>
+    <div class="settings-header">
+      <span class="settings-title">Central de Controle</span>
+      <div id="logoArea" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">
+        <img id="profileLogo" class="profile-pic" src="https://drive.google.com/thumbnail?id=1xG9c2LJaXOM6O6vLhU-8zt_rTl272tbg" alt="Logo">
       </div>
-      <div class="settings-card" id="cardFacebookAds">
-        <div class="icon">📈</div><div class="label">Métricas Facebook ADS</div>
+    </div>
+
+    <div class="dashboard-card">
+      <label class="select-label" for="selectClient">Selecione o Cliente:</label>
+      <select id="selectClient">
+        <option value="">Carregando clientes...</option>
+      </select>
+
+      <div id="metricsPanel" style="margin-top:12px;width:100%;">
+        <div class="loading" id="metricsLoading">Selecione um cliente para ver as métricas...</div>
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="feedbacks-title">Feedbacks do Cliente</div>
+      <div id="feedbacksPanel">
+        <div class="loading">Selecione um cliente para ver os feedbacks...</div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL MÉTRICAS GOOGLE ADS -->
-  <div class="modal-bg" id="modalGoogleAds">
-    <div class="modal-main" style="width:400px;">
-      <button class="close-btn" id="btnCloseGoogleAds" type="button">&times;</button>
-      <h3>Métricas Google ADS</h3>
-      <div id="googleAdsContent">
-        <div class="loading">Carregando métricas...</div>
-      </div>
-      <button class="btn" id="btnRefreshGoogleAds" type="button">🔄 Atualizar Dados</button>
-      <div id="statusMsgGoogleAds" class="status-msg"></div>
-    </div>
-  </div>
+  <script>
+    // Dropdown dinâmico de clientes
+    const selectClient = document.getElementById('selectClient');
+    const metricsPanel = document.getElementById('metricsPanel');
+    const feedbacksPanel = document.getElementById('feedbacksPanel');
+    const metricsLoading = document.getElementById('metricsLoading');
 
-  <!-- MODAL MÉTRICAS FACEBOOK ADS -->
-  <div class="modal-bg" id="modalFacebookAds">
-    <div class="modal-main" style="width:400px;">
-      <button class="close-btn" id="btnCloseFacebookAds" type="button">&times;</button>
-      <h3>Métricas Facebook ADS</h3>
-      <div id="facebookAdsContent">
-        <div class="loading">Em desenvolvimento...</div>
-      </div>
-      <div id="statusMsgFacebookAds" class="status-msg"></div>
-    </div>
-  </div>
+    let clientsList = [];
 
-<script>
-  // Variáveis globais
-  let accessToken = '';
-  let tokenClient = null;
-
-  // Elementos DOM
-  let modalGoogleAds, btnCloseGoogleAds, modalFacebookAds, btnCloseFacebookAds;
-  let googleAdsContent, statusMsgGoogleAds, btnRefreshGoogleAds;
-
-  window.onload = function( ) {
-    // Inicialização do Google API (mantido do código original)
-    gapi.load('client', () => { gapi.client.init({apiKey: 'AIzaSyDyKnas6na8NR_mVwvfefA7nOjTd6Pj1B4'}); });
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: '1078695213241-k5h9kpca2vfdbj52eu1n9qgn7as995fa.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/drive.readonly',
-      callback: handleTokenResponse
-    } );
-
-    // LOGIN PRO GOOGLE
-    document.getElementById('logoArea').onclick = function() {
-      tokenClient.requestAccessToken();
-    };
-
-    // Elementos dos modais
-    modalGoogleAds = document.getElementById('modalGoogleAds');
-    btnCloseGoogleAds = document.getElementById('btnCloseGoogleAds');
-    modalFacebookAds = document.getElementById('modalFacebookAds');
-    btnCloseFacebookAds = document.getElementById('btnCloseFacebookAds');
-    googleAdsContent = document.getElementById('googleAdsContent');
-    statusMsgGoogleAds = document.getElementById('statusMsgGoogleAds');
-    btnRefreshGoogleAds = document.getElementById('btnRefreshGoogleAds');
-
-    // Event listeners
-    document.getElementById('cardGoogleAds').onclick = abrirGoogleAds;
-    document.getElementById('cardFacebookAds').onclick = abrirFacebookAds;
-    btnCloseGoogleAds.onclick = fecharGoogleAds;
-    btnCloseFacebookAds.onclick = fecharFacebookAds;
-    btnRefreshGoogleAds.onclick = carregarMetricasGoogleAds;
-  };
-
-  function handleTokenResponse(tokenResponse) {
-    if (tokenResponse && tokenResponse.access_token) {
-      accessToken = tokenResponse.access_token;
-      getUserInfoGoogle();
-    }
-  }
-
-  async function getUserInfoGoogle() {
-    if (!accessToken) return;
-    try {
-      const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { 'Authorization': 'Bearer ' + accessToken }
-      } );
-      const data = await resp.json();
-      if (data.picture) {
-        document.getElementById('profileLogo').src = data.picture;
-        document.getElementById('profileLogo').alt = "Foto do usuário";
+    async function fetchClients() {
+      try {
+        const resp = await fetch('/.netlify/functions/get-clients');
+        const data = await resp.json();
+        if(data.success && Array.isArray(data.data)) {
+          clientsList = data.data;
+          selectClient.innerHTML = '<option value="">Selecione...</option>';
+          clientsList.forEach(c => {
+            selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+          });
+        } else {
+          selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
+        }
+      } catch {
+        selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
       }
-    } catch (e) {
-      console.error("Erro ao buscar dados do usuário Google:", e);
     }
-  }
 
-  // Funções para Google Ads
-  function abrirGoogleAds() {
-    modalGoogleAds.classList.add('open');
-    carregarMetricasGoogleAds();
-  }
+    async function fetchMetrics(clientId) {
+      metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
+      try {
+        const resp = await fetch(`/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`);
+        const result = await resp.json();
+        if(result.success && result.data) {
+          const d = result.data;
+          metricsPanel.innerHTML = `
+            <div class="metrics-container">
+              <div class="metric-card"><div class="metric-value">${d.impressions ?? '-'}</div><div class="metric-label">Impressões</div></div>
+              <div class="metric-card"><div class="metric-value">${d.clicks ?? '-'}</div><div class="metric-label">Cliques</div></div>
+              <div class="metric-card"><div class="metric-value">${d.conversions ?? '-'}</div><div class="metric-label">Conversões</div></div>
+              <div class="metric-card"><div class="metric-value">R$ ${d.cost !== undefined ? Number(d.cost).toFixed(2) : '-'}</div><div class="metric-label">Custo</div></div>
+              <div class="metric-card"><div class="metric-value">${d.ctr ?? '-'}%</div><div class="metric-label">CTR</div></div>
+              <div class="metric-card"><div class="metric-value">${d.conversionRate ?? '-'}%</div><div class="metric-label">Taxa Conversão</div></div>
+              <div class="metric-card"><div class="metric-value">${d.costPerConversion ?? '-'}</div><div class="metric-label">Custo/Conversão</div></div>
+              <div class="metric-card"><div class="metric-value">${d.dateReference ?? '-'}</div><div class="metric-label">Data Ref.</div></div>
+            </div>
+            <div style="text-align:center;font-size:0.95rem;margin-top:10px;color:#4975b2;">
+              Plataforma: <b>${d.platform ?? '-'}</b>
+            </div>
+          `;
+        } else {
+          metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Nenhuma métrica encontrada para este cliente.</div>`;
+        }
+      } catch (e) {
+        metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar métricas.</div>`;
+      }
+    }
 
-  function fecharGoogleAds() {
-    modalGoogleAds.classList.remove('open');
-  }
+    async function fetchFeedbacks(clientId) {
+      feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
+      try {
+        const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
+        const result = await resp.json();
+        if(result.success && Array.isArray(result.data) && result.data.length > 0) {
+          feedbacksPanel.innerHTML = `
+            <div class="feedback-list">
+              ${result.data.map(f => `
+                <div class="feedback-card">
+                  <div class="feedback-date">${f.dataFeedback ? new Date(f.dataFeedback).toLocaleString() : ''}</div>
+                  <div class="feedback-summary">${f.resumoFeedback || '-'}</div>
+                  <div class="feedback-full">${f.feedbackCompleto || ''}</div>
+                  <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.fonte || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
+        }
+      } catch {
+        feedbacksPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar feedbacks.</div>`;
+      }
+    }
 
-  async function carregarMetricasGoogleAds() {
-    statusMsgGoogleAds.textContent = 'Carregando métricas...';
-    googleAdsContent.innerHTML = '<div class="loading">Carregando métricas...</div>';
-    
-    try {
-      const response = await fetch('/.netlify/functions/google-ads-metrics');
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        exibirMetricasGoogleAds(result.data);
-        statusMsgGoogleAds.textContent = `Última atualização: ${new Date(result.data.lastUpdated).toLocaleString()}`;
+    // Handler do select
+    selectClient.addEventListener('change', function() {
+      const clientId = this.value;
+      if(clientId) {
+        fetchMetrics(clientId);
+        fetchFeedbacks(clientId);
       } else {
-        throw new Error(result.message || 'Erro ao carregar métricas');
+        metricsPanel.innerHTML = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
+        feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
       }
-    } catch (error) {
-      console.error('Erro ao carregar métricas:', error);
-      googleAdsContent.innerHTML = '<div style="color: #dc3545;">Erro ao carregar métricas. Tente novamente.</div>';
-      statusMsgGoogleAds.textContent = 'Erro: ' + error.message;
-    }
-  }
+    });
 
-  function exibirMetricasGoogleAds(data) {
-    const html = `
-      <div class="metrics-container">
-        <div class="metric-card">
-          <div class="metric-value">${data.impressions.toLocaleString()}</div>
-          <div class="metric-label">Impressões</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">${data.clicks.toLocaleString()}</div>
-          <div class="metric-label">Cliques</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">${data.conversions}</div>
-          <div class="metric-label">Conversões</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">R$ ${data.cost.toFixed(2)}</div>
-          <div class="metric-label">Custo</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">${data.ctr}%</div>
-          <div class="metric-label">CTR</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">${data.conversionRate}%</div>
-          <div class="metric-label">Taxa de Conversão</div>
-        </div>
-      </div>
-    `;
-    googleAdsContent.innerHTML = html;
-  }
-
-  // Funções para Facebook Ads
-  function abrirFacebookAds() {
-    modalFacebookAds.classList.add('open');
-  }
-
-  function fecharFacebookAds() {
-    modalFacebookAds.classList.remove('open');
-  }
-</script>
-
+    // Inicialização
+    fetchClients();
+  </script>
 </body>
 </html>
