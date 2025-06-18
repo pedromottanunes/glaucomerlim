@@ -59,90 +59,151 @@
     </div>
   </div>
 
-  <script>
-    // Dropdown dinâmico de clientes
-    const selectClient = document.getElementById('selectClient');
-    const metricsPanel = document.getElementById('metricsPanel');
-    const feedbacksPanel = document.getElementById('feedbacksPanel');
-    const btnFiltrar = document.getElementById('btnFiltrar');
-    const inputStart = document.getElementById('startDate');
-    const inputEnd = document.getElementById('endDate');
+ <script>
+  // Dropdown dinâmico de clientes
+  const selectClient = document.getElementById('selectClient');
+  const metricsPanel = document.getElementById('metricsPanel');
+  const feedbacksPanel = document.getElementById('feedbacksPanel');
+  const btnFiltrar = document.getElementById('btnFiltrar');
+  const inputStart = document.getElementById('startDate');
+  const inputEnd = document.getElementById('endDate');
 
-    let currentClientId = '';
+  let currentClientId = '';
 
-    async function fetchClients() {
-      try {
-        const resp = await fetch('/.netlify/functions/get-clients');
-        const data = await resp.json();
-        if(data.success && Array.isArray(data.data)) {
-          selectClient.innerHTML = '<option value="">Selecione...</option>';
-          data.data.forEach(c => {
-            selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-          });
-        } else {
-          selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
-        }
-      } catch {
-        selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
+  async function fetchClients() {
+    try {
+      const resp = await fetch('/.netlify/functions/get-clients');
+      const data = await resp.json();
+      if (data.success && Array.isArray(data.data)) {
+        selectClient.innerHTML = '<option value="">Selecione...</option>';
+        data.data.forEach(c => {
+          selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+      } else {
+        selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
       }
+    } catch {
+      selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
     }
+  }
 
-    async function fetchMetrics(clientId, startDate = '', endDate = '') {
-      metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
-      let url = `/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`;
-      if(startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
-      }
-      try {
-        const resp = await fetch(url);
-        const result = await resp.json();
-        if(result.success && (result.summary || result.campaigns)) {
-          // Exibir resumo
-          const s = result.summary || {};
-          let html = `<div class="metrics-container" style="margin-bottom:10px;">
-              <div class="metric-card"><div class="metric-value">${s.impressões ?? '-'}</div><div class="metric-label">Impressões (Total)</div></div>
-              <div class="metric-card"><div class="metric-value">${s.cliques ?? '-'}</div><div class="metric-label">Cliques (Total)</div></div>
-              <div class="metric-card"><div class="metric-value">${s.conversões ?? '-'}</div><div class="metric-label">Conversões (Total)</div></div>
-              <div class="metric-card"><div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div><div class="metric-label">Custo (Total)</div></div>
-              <div class="metric-card"><div class="metric-value">${s.ctr ?? '-'}%</div><div class="metric-label">CTR Geral</div></div>
-              <div class="metric-card"><div class="metric-value">${s.taxaConversao ?? '-'}%</div><div class="metric-label">Taxa Conversão Geral</div></div>
-              <div class="metric-card"><div class="metric-value">${s.custoPorConversao ?? '-'}</div><div class="metric-label">Custo/Conversão Geral</div></div>
-            </div>
-            <div style="font-size:1.08rem;margin-bottom:5px;margin-top:8px;"><b>Métricas por Campanha</b></div>`;
-          if(result.campaigns.length) {
-            html += `<div style="width:99%">`;
-            result.campaigns.forEach(c => {
-              html += `
-                <div style="background:#f9fafd;border-radius:9px;padding:8px 7px 7px 7px;margin-bottom:8px;border:1px solid #e4e8ef;">
-                  <b>${c.campanha}</b> <span style="font-size:0.97rem;color:#4975b2;">${c.periodo}</span>
-                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px 8px;margin-top:7px;">
-                    <span><b>Imp:</b> ${c.impressoes}</span>
-                    <span><b>Clk:</b> ${c.cliques}</span>
-                    <span><b>Conv:</b> ${c.conversoes}</span>
-                    <span><b>R$:</b> ${Number(c.custo).toFixed(2)}</span>
-                    <span><b>CTR:</b> ${c.ctr}%</span>
-                    <span><b>Tx Conv:</b> ${c.taxaConversao}%</span>
-                    <span><b>CPC:</b> ${c.custoPorConversao}</span>
-                  </div>
+  async function fetchMetrics(clientId, startDate = '', endDate = '') {
+    metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
+    let url = `/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`;
+    if (startDate && endDate) {
+      url += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+    try {
+      const resp = await fetch(url);
+      const result = await resp.json();
+      if (result.success && (result.summary || result.campaigns)) {
+        // Exibir resumo
+        const s = result.summary || {};
+        let html = `<div class="metrics-container" style="margin-bottom:10px;">
+            <div class="metric-card"><div class="metric-value">${s.impressões ?? '-'}</div><div class="metric-label">Impressões (Total)</div></div>
+            <div class="metric-card"><div class="metric-value">${s.cliques ?? '-'}</div><div class="metric-label">Cliques (Total)</div></div>
+            <div class="metric-card"><div class="metric-value">${s.conversões ?? '-'}</div><div class="metric-label">Conversões (Total)</div></div>
+            <div class="metric-card"><div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div><div class="metric-label">Custo (Total)</div></div>
+            <div class="metric-card"><div class="metric-value">${s.ctr ?? '-'}%</div><div class="metric-label">CTR Geral</div></div>
+            <div class="metric-card"><div class="metric-value">${s.taxaConversao ?? '-'}%</div><div class="metric-label">Taxa Conversão Geral</div></div>
+            <div class="metric-card"><div class="metric-value">${s.custoPorConversao ?? '-'}</div><div class="metric-label">Custo/Conversão Geral</div></div>
+          </div>
+          <div style="font-size:1.08rem;margin-bottom:5px;margin-top:8px;"><b>Métricas por Campanha</b></div>`;
+        if (result.campaigns && result.campaigns.length) {
+          html += `<div style="width:99%">`;
+          result.campaigns.forEach(c => {
+            html += `
+              <div style="background:#f9fafd;border-radius:9px;padding:8px 7px 7px 7px;margin-bottom:8px;border:1px solid #e4e8ef;">
+                <b>${c.campanha}</b> <span style="font-size:0.97rem;color:#4975b2;">${c.periodo || ''}</span>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px 8px;margin-top:7px;">
+                  <span><b>Imp:</b> ${c.impressoes}</span>
+                  <span><b>Clk:</b> ${c.cliques}</span>
+                  <span><b>Conv:</b> ${c.conversoes}</span>
+                  <span><b>R$:</b> ${Number(c.custo).toFixed(2)}</span>
+                  <span><b>CTR:</b> ${c.ctr}%</span>
+                  <span><b>Tx Conv:</b> ${c.taxaConversao}%</span>
+                  <span><b>CPC:</b> ${c.custoPorConversao}</span>
                 </div>
-              `;
-            });
-            html += `</div>`;
-          } else {
-            html += `<div class="loading" style="color:#c93434;">Nenhuma campanha encontrada no período.</div>`;
-          }
-          metricsPanel.innerHTML = html;
+              </div>
+            `;
+          });
+          html += `</div>`;
         } else {
-          metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Nenhuma métrica encontrada para este cliente/período.</div>`;
+          html += `<div class="loading" style="color:#c93434;">Nenhuma campanha encontrada no período.</div>`;
         }
-      } catch (e) {
-        metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar métricas.</div>`;
+        metricsPanel.innerHTML = html;
+      } else {
+        metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Nenhuma métrica encontrada para este cliente/período.</div>`;
       }
+    } catch (e) {
+      metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar métricas.</div>`;
     }
+  }
 
-    async function fetchFeedbacks(clientId) {
-      feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
-      try {
-        const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
-        const result = await resp.json();
-        if(result.success && Array.isArray(result
+  async function fetchFeedbacks(clientId) {
+    feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
+    try {
+      const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
+      const result = await resp.json();
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        // Ordena os feedbacks da data mais recente para a mais antiga
+        result.data.sort((a, b) => {
+          if (!a.feedbackDate || !b.feedbackDate) return 0;
+          // Suporta formato dd/mm/yyyy ou yyyy-mm-dd
+          const dA = a.feedbackDate.includes('/') ? a.feedbackDate.split('/').reverse().join('-') : a.feedbackDate;
+          const dB = b.feedbackDate.includes('/') ? b.feedbackDate.split('/').reverse().join('-') : b.feedbackDate;
+          return new Date(dB) - new Date(dA);
+        });
+        feedbacksPanel.innerHTML = `
+          <div class="feedback-list">
+            ${result.data.map(f => `
+              <div class="feedback-card">
+                <div class="feedback-date">${f.feedbackDate || ''}</div>
+                <div class="feedback-summary">${f.feedbackSummary || '-'}</div>
+                <div class="feedback-full">${f.feedbackComplete || ''}</div>
+                <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.source || ''}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
+      }
+    } catch {
+      feedbacksPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar feedbacks.</div>`;
+    }
+  }
+
+  // Handler do select
+  selectClient.addEventListener('change', function() {
+    const clientId = this.value;
+    currentClientId = clientId;
+    // Limpa os campos de data
+    inputStart.value = '';
+    inputEnd.value = '';
+    if (clientId) {
+      fetchMetrics(clientId);
+      fetchFeedbacks(clientId);
+    } else {
+      metricsPanel.innerHTML = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
+      feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
+    }
+  });
+
+  btnFiltrar.addEventListener('click', function() {
+    if (!currentClientId) {
+      metricsPanel.innerHTML = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
+      return;
+    }
+    const start = inputStart.value;
+    const end = inputEnd.value;
+    if (!start || !end) {
+      metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Selecione o período inicial e final.</div>`;
+      return;
+    }
+    fetchMetrics(currentClientId, start, end);
+  });
+
+  // Inicialização
+  fetchClients();
+</script>
