@@ -1,9 +1,0 @@
-{
-  "name": "netlify-functions",
-  "version": "1.0.0",
-  "description": "Netlify Functions para integração com Google Sheets",
-  "dependencies": {
-    "googleapis": "^128.0.0"
-  }
-}
-
