@@ -1,217 +1,130 @@
+// Configurações das planilhas
+//const SPREADSHEET_ID = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
+//const METRICS_SHEET_NAME = 'Métricas_Trafego_Pago';
+//const FEEDBACKS_SHEET_NAME = 'Feedbacks_Clientes';
+
 const { google } = require('googleapis');
 
-// Configurações das planilhas
-const SPREADSHEET_ID = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
-const METRICS_SHEET_NAME = 'Métricas_Trafego_Pago';
-const FEEDBACKS_SHEET_NAME = 'Feedbacks_Clientes';
-
-// Função para autenticar com Google Sheets
-async function getGoogleSheetsAuth() {
-  try {
-    const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-    
-    const auth = new google.auth.GoogleAuth({
-      credentials: serviceAccountKey,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets']
-    });
-    
-    return auth;
-  } catch (error) {
-    console.error('Erro na autenticação:', error);
-    throw new Error('Falha na autenticação com Google Sheets');
-  }
-}
-
-// Função para adicionar dados de métricas à planilha
-async function addMetricsToSheet(metricsData) {
-  try {
-    const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({ version: 'v4', auth });
-    
-    // Preparar os dados para inserção
-    const values = [[
-      metricsData.clientId || '',
-      metricsData.clientName || '',
-      metricsData.dateReference || new Date().toISOString().split('T')[0],
-      metricsData.platform || 'Google Ads',
-      metricsData.impressions || 0,
-      metricsData.clicks || 0,
-      metricsData.conversions || 0,
-      metricsData.cost || 0,
-      metricsData.ctr || 0,
-      metricsData.conversionRate || 0,
-      metricsData.costPerConversion || 0,
-      new Date().toISOString()
-    ]];
-    
-    const request = {
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${METRICS_SHEET_NAME}!A:L`,
-      valueInputOption: 'RAW',
-      insertDataOption: 'INSERT_ROWS',
-      resource: {
-        values: values
-      }
-    };
-    
-    const response = await sheets.spreadsheets.values.append(request);
-    return response.data;
-  } catch (error) {
-    console.error('Erro ao adicionar métricas:', error);
-    throw error;
-  }
-}
-
-// Função para buscar métricas de um cliente específico
-async function getMetricsByClient(clientId) {
-  try {
-    const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({ version: 'v4', auth });
-    
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${METRICS_SHEET_NAME}!A:L`
-    });
-    
-    const rows = response.data.values;
-    if (!rows || rows.length <= 1) {
-      return null; // Sem dados ou apenas cabeçalho
-    }
-    
-    // Filtrar dados pelo clientId
-    const clientMetrics = rows.slice(1).filter(row => row[0] === clientId);
-    
-    if (clientMetrics.length === 0) {
-      return null;
-    }
-    
-    // Pegar a métrica mais recente (última linha)
-    const latestMetric = clientMetrics[clientMetrics.length - 1];
-    
-    return {
-      clientId: latestMetric[0],
-      clientName: latestMetric[1],
-      dateReference: latestMetric[2],
-      platform: latestMetric[3],
-      impressions: parseInt(latestMetric[4]) || 0,
-      clicks: parseInt(latestMetric[5]) || 0,
-      conversions: parseInt(latestMetric[6]) || 0,
-      cost: parseFloat(latestMetric[7]) || 0,
-      ctr: parseFloat(latestMetric[8]) || 0,
-      conversionRate: parseFloat(latestMetric[9]) || 0,
-      costPerConversion: parseFloat(latestMetric[10]) || 0,
-      lastUpdated: latestMetric[11]
-    };
-  } catch (error) {
-    console.error('Erro ao buscar métricas:', error);
-    throw error;
-  }
-}
-
 exports.handler = async function(event, context) {
-  // Configurar CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
   };
-
-  // Responder a requisições OPTIONS (preflight)
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   try {
-    // Verificar se a variável de ambiente está configurada
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+    const auth = new google.auth.JWT(
+      serviceAccount.client_email,
+      null,
+      serviceAccount.private_key,
+      ['https://www.googleapis.com/auth/spreadsheets']
+    );
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    const { clientId, startDate, endDate } = event.queryStringParameters || {};
+    if (!clientId) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "clientId obrigatório" }) };
+    }
+
+
+    // Lê todas as linhas da aba Métricas_Trafego_Pago
+    const spreadsheetId = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
+    const range = 'Métricas_Trafego_Pago!A:L';
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
+
+    const rows = res.data.values || [];
+    const header = rows[0];
+    let data = rows.slice(1)
+      .map(r => {
+        let obj = {};
+        header.forEach((col, idx) => { obj[col] = r[idx] || ''; });
+        return obj;
+      })
+      .filter(row => row.ID_Cliente === clientId);
+
+    // Filtra por data se informado
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      data = data.filter(row => {
+        const dt = new Date(row.Data_Referencia);
+        return dt >= s && dt <= e;
+      });
+    }
+
+    // Se não houver dados, retorna vazio
+    if (!data.length) {
       return {
-        statusCode: 500,
+        statusCode: 200,
         headers,
-        body: JSON.stringify({ 
-          error: 'Variável de ambiente GOOGLE_SERVICE_ACCOUNT_KEY não configurada' 
-        })
+        body: JSON.stringify({ success: true, summary: {}, campaigns: [] })
       };
     }
 
-    // Se for uma requisição POST (dados vindos do Make)
-    if (event.httpMethod === 'POST') {
-      const data = JSON.parse(event.body);
-      
-      console.log('Dados recebidos do Make:', data);
-      
-      // Adicionar dados à planilha
-      await addMetricsToSheet(data);
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ 
-          message: "Métricas do Google Ads salvas com sucesso!",
-          timestamp: new Date().toISOString()
-        })
-      };
+    // Agrupa por campanha
+    const campanhas = {};
+    for (const row of data) {
+      const campanha = row.Campanha || 'SEM NOME';
+      if (!campanhas[campanha]) campanhas[campanha] = [];
+      campanhas[campanha].push(row);
     }
-    
-    // Se for uma requisição GET (frontend buscando dados)
-    if (event.httpMethod === 'GET') {
-      const clientId = event.queryStringParameters?.clientId;
-      
-      if (!clientId) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ 
-            error: 'Parâmetro clientId é obrigatório' 
-          })
-        };
-      }
-      
-      // Buscar métricas do cliente específico
-      const metrics = await getMetricsByClient(clientId);
-      
-      if (!metrics) {
-        return {
-          statusCode: 404,
-          headers,
-          body: JSON.stringify({ 
-            error: 'Nenhuma métrica encontrada para este cliente',
-            clientId: clientId
-          })
-        };
-      }
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          data: metrics,
-          message: "Métricas do Google Ads obtidas com sucesso!"
-        })
-      };
-    }
-    
-    // Método não suportado
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Método não permitido' })
+
+    // Soma geral (resumo)
+    const resumo = {
+      impressões: 0, cliques: 0, conversões: 0, custo: 0,
+      ctr: 0, taxaConversao: 0, custoPorConversao: 0
     };
-    
+    let nCampanhas = 0;
+
+    // Calcula resumo e prepara retorno por campanha
+    const campanhasArr = Object.entries(campanhas).map(([nome, rows]) => {
+      let imp = 0, clk = 0, conv = 0, cst = 0;
+      rows.forEach(r => {
+        imp += Number(r.Impressoes || 0);
+        clk += Number(r.Cliques || 0);
+        conv += Number(r.Conversoes || 0);
+        cst += Number(r.Custo || 0);
+      });
+      nCampanhas++;
+      resumo.impressões += imp;
+      resumo.cliques += clk;
+      resumo.conversões += conv;
+      resumo.custo += cst;
+      return {
+        campanha: nome,
+        periodo: `${rows[0].Data_Referencia} ... ${rows[rows.length-1].Data_Referencia}`,
+        impressoes: imp,
+        cliques: clk,
+        conversoes: conv,
+        custo: cst,
+        ctr: clk && imp ? ((clk/imp)*100).toFixed(2) : '0',
+        taxaConversao: conv && clk ? ((conv/clk)*100).toFixed(2) : '0',
+        custoPorConversao: conv ? (cst/conv).toFixed(2) : '0'
+      };
+    });
+    resumo.ctr = resumo.cliques && resumo.impressões ? ((resumo.cliques/resumo.impressões)*100).toFixed(2) : '0';
+    resumo.taxaConversao = resumo.conversões && resumo.cliques ? ((resumo.conversões/resumo.cliques)*100).toFixed(2) : '0';
+    resumo.custoPorConversao = resumo.conversões ? (resumo.custo/resumo.conversões).toFixed(2) : '0';
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        summary: resumo,
+        campaigns: campanhasArr
+      })
+    };
+
   } catch (error) {
-    console.error('Erro na função:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Erro interno do servidor',
-        message: error.message 
-      })
+      body: JSON.stringify({ error: 'Erro interno do servidor', message: error.message })
     };
   }
 };
-
