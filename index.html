@@ -158,8 +158,7 @@ async function fetchFeedbacks(clientId) {
           ${result.data.map(f => `
             <div class="feedback-card">
               <div class="feedback-date">${f.Data_Feedback || ''}</div>
-              <div class="feedback-summary">${f.Resumo_Feedback || '-'}</div>
-              <div class="feedback-full">${f.Feedback_Completo || ''}</div>
+              <div class="feedback-summary">${f.Resumo || '-'}</div>
               <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.Fonte || ''}</div>
             </div>
           `).join('')}
