@@ -29,7 +29,7 @@ exports.handler = async function(event, context) {
     
     // Lê todas as linhas da aba Feedbacks_Clientes
     const spreadsheetId = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
-    const range = 'Feedbacks_Clientes!A:F';
+    const range = 'Feedbacks_Clientes!A:D';
     const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
 
     const rows = res.data.values || [];
