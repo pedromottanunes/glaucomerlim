@@ -51,11 +51,11 @@ if (startDate && endDate) {
   data = data.filter(row => {
     if (!row.Data_Referencia) return false;
     const dataRow = String(row.Data_Referencia).substring(0, 10);
-    // Log para debug: console.log({dataRow, startDate, endDate});
+    console.log({dataRow, startDate, endDate, row}); // <-- ADICIONE AQUI
     return dataRow >= startDate && dataRow <= endDate;
-    
   });
 }
+
 
 
 
