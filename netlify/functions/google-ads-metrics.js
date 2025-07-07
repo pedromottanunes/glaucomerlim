@@ -40,6 +40,8 @@ exports.handler = async function(event, context) {
       })
       .filter(row => row.ID_Cliente === clientId);
 
+    console.log(`Dados encontrados para cliente ${clientId}:`, data.length);
+
     // Função para converter data para formato YYYY-MM-DD
     function formatDateToISO(dateStr) {
       if (!dateStr) return '';
@@ -84,22 +86,31 @@ exports.handler = async function(event, context) {
       return '';
     }
 
-    // Filtra por data se informado
-    if (startDate && endDate) {
-      console.log('Filtros de data recebidos:', { startDate, endDate });
+    // Verifica se há dados com Data_Referencia preenchida
+    const dataComData = data.filter(row => row.Data_Referencia && row.Data_Referencia.trim() !== '');
+    const temDatasValidas = dataComData.length > 0;
+
+    console.log(`Dados com Data_Referencia preenchida: ${dataComData.length} de ${data.length}`);
+
+    // Filtra por data APENAS se:
+    // 1. startDate e endDate foram informados
+    // 2. E há pelo menos alguns dados com Data_Referencia preenchida
+    if (startDate && endDate && temDatasValidas) {
+      console.log('Aplicando filtro de data:', { startDate, endDate });
       
       data = data.filter(row => {
-        if (!row.Data_Referencia) {
-          console.log('Linha sem Data_Referencia:', row);
-          return false;
+        // Se não tem Data_Referencia, inclui no resultado (não filtra por data)
+        if (!row.Data_Referencia || row.Data_Referencia.trim() === '') {
+          console.log('Linha sem data - incluindo:', row.ID_Cliente, row.Campanha);
+          return true;
         }
         
         const dataRowISO = formatDateToISO(row.Data_Referencia);
         console.log('Data original:', row.Data_Referencia, 'Convertida:', dataRowISO);
         
         if (!dataRowISO) {
-          console.log('Não foi possível converter a data:', row.Data_Referencia);
-          return false;
+          console.log('Não foi possível converter a data - incluindo:', row.Data_Referencia);
+          return true; // Inclui se não conseguir converter
         }
         
         const isInRange = dataRowISO >= startDate && dataRowISO <= endDate;
@@ -110,7 +121,11 @@ exports.handler = async function(event, context) {
       
       console.log('Dados após filtro de data:', data.length, 'registros');
     } else {
-      console.log('Sem filtros de data - retornando todos os dados do cliente');
+      if (startDate && endDate) {
+        console.log('Filtro de data solicitado, mas não há datas válidas na planilha - retornando todos os dados');
+      } else {
+        console.log('Sem filtros de data - retornando todos os dados do cliente');
+      }
     }
 
     // Se não houver dados, retorna vazio
@@ -129,6 +144,7 @@ exports.handler = async function(event, context) {
             endDate,
             totalRowsBeforeFilter: rows.length - 1,
             rowsAfterClientFilter: data.length,
+            temDatasValidas,
             message: 'Nenhum dado encontrado para este cliente/período'
           }
         })
@@ -164,9 +180,19 @@ exports.handler = async function(event, context) {
       resumo.cliques += clk;
       resumo.conversões += conv;
       resumo.custo += cst;
+      
+      // Para o período, usa as datas disponíveis ou uma mensagem padrão
+      let periodo = 'Período não especificado';
+      const datasValidas = rows.filter(r => r.Data_Referencia && r.Data_Referencia.trim() !== '');
+      if (datasValidas.length > 0) {
+        const primeiraData = formatDateToISO(datasValidas[0].Data_Referencia) || datasValidas[0].Data_Referencia;
+        const ultimaData = formatDateToISO(datasValidas[datasValidas.length-1].Data_Referencia) || datasValidas[datasValidas.length-1].Data_Referencia;
+        periodo = `${primeiraData} ... ${ultimaData}`;
+      }
+      
       return {
         campanha: nome,
-        periodo: `${formatDateToISO(rows[0].Data_Referencia)} ... ${formatDateToISO(rows[rows.length-1].Data_Referencia)}`,
+        periodo: periodo,
         impressoes: imp,
         cliques: clk,
         conversoes: conv,
@@ -196,7 +222,9 @@ exports.handler = async function(event, context) {
           startDate,
           endDate,
           totalRowsFound: data.length,
-          campaignsFound: campanhasArr.length
+          campaignsFound: campanhasArr.length,
+          temDatasValidas,
+          message: `Dados encontrados: ${data.length} registros, ${campanhasArr.length} campanhas`
         }
       })
     };
