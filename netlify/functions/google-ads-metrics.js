@@ -48,13 +48,15 @@ exports.handler = async function(event, context) {
 
     // Filtra por data se informado
 if (startDate && endDate) {
-  // compara só o trecho da data, ignora hora!
   data = data.filter(row => {
     if (!row.Data_Referencia) return false;
-    const dataRow = row.Data_Referencia.substring(0, 10); // "YYYY-MM-DD"
+    const dataRow = String(row.Data_Referencia).substring(0, 10);
+    // Log para debug: console.log({dataRow, startDate, endDate});
     return dataRow >= startDate && dataRow <= endDate;
+    
   });
 }
+
 
 
     // Se não houver dados, retorna vazio
