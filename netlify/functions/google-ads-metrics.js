@@ -1,8 +1,3 @@
-// Configurações das planilhas
-//const SPREADSHEET_ID = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
-//const METRICS_SHEET_NAME = 'Métricas_Trafego_Pago';
-//const FEEDBACKS_SHEET_NAME = 'Feedbacks_Clientes';
-
 const { google } = require('googleapis');
 
 exports.handler = async function(event, context) {
@@ -30,7 +25,6 @@ exports.handler = async function(event, context) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "clientId obrigatório" }) };
     }
 
-
     // Lê todas as linhas da aba Métricas_Trafego_Pago
     const spreadsheetId = '1bLG8LOmqUTvlKQ0czHSmRYFU2DVUkMVYVaLNWckv7oY';
     const range = 'Métricas_Trafego_Pago!A:L';
@@ -46,25 +40,98 @@ exports.handler = async function(event, context) {
       })
       .filter(row => row.ID_Cliente === clientId);
 
+    // Função para converter data para formato YYYY-MM-DD
+    function formatDateToISO(dateStr) {
+      if (!dateStr) return '';
+      
+      // Se já está no formato YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        return dateStr.substring(0, 10);
+      }
+      
+      // Se está no formato DD/MM/YYYY
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dateStr)) {
+        const parts = dateStr.split('/');
+        if (parts.length >= 3) {
+          const day = parts[0].padStart(2, '0');
+          const month = parts[1].padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
+        }
+      }
+      
+      // Se está no formato DD-MM-YYYY
+      if (/^\d{1,2}-\d{1,2}-\d{4}/.test(dateStr)) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+          const day = parts[0].padStart(2, '0');
+          const month = parts[1].padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
+        }
+      }
+      
+      // Tenta converter usando Date (para outros formatos)
+      try {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        console.log('Erro ao converter data:', dateStr, e);
+      }
+      
+      return '';
+    }
+
     // Filtra por data se informado
-if (startDate && endDate) {
-  data = data.filter(row => {
-    if (!row.Data_Referencia) return false;
-    const dataRow = String(row.Data_Referencia).substring(0, 10);
-    console.log({dataRow, startDate, endDate, row}); // <-- ADICIONE AQUI
-    return dataRow >= startDate && dataRow <= endDate;
-  });
-}
-
-
-
+    if (startDate && endDate) {
+      console.log('Filtros de data recebidos:', { startDate, endDate });
+      
+      data = data.filter(row => {
+        if (!row.Data_Referencia) {
+          console.log('Linha sem Data_Referencia:', row);
+          return false;
+        }
+        
+        const dataRowISO = formatDateToISO(row.Data_Referencia);
+        console.log('Data original:', row.Data_Referencia, 'Convertida:', dataRowISO);
+        
+        if (!dataRowISO) {
+          console.log('Não foi possível converter a data:', row.Data_Referencia);
+          return false;
+        }
+        
+        const isInRange = dataRowISO >= startDate && dataRowISO <= endDate;
+        console.log('Data no período?', isInRange, { dataRowISO, startDate, endDate });
+        
+        return isInRange;
+      });
+      
+      console.log('Dados após filtro de data:', data.length, 'registros');
+    } else {
+      console.log('Sem filtros de data - retornando todos os dados do cliente');
+    }
 
     // Se não houver dados, retorna vazio
     if (!data.length) {
+      console.log('Nenhum dado encontrado para o cliente/período');
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, summary: {}, campaigns: [] })
+        body: JSON.stringify({ 
+          success: true, 
+          summary: {}, 
+          campaigns: [],
+          debug: {
+            clientId,
+            startDate,
+            endDate,
+            totalRowsBeforeFilter: rows.length - 1,
+            rowsAfterClientFilter: data.length,
+            message: 'Nenhum dado encontrado para este cliente/período'
+          }
+        })
       };
     }
 
@@ -99,7 +166,7 @@ if (startDate && endDate) {
       resumo.custo += cst;
       return {
         campanha: nome,
-        periodo: `${rows[0].Data_Referencia} ... ${rows[rows.length-1].Data_Referencia}`,
+        periodo: `${formatDateToISO(rows[0].Data_Referencia)} ... ${formatDateToISO(rows[rows.length-1].Data_Referencia)}`,
         impressoes: imp,
         cliques: clk,
         conversoes: conv,
@@ -109,9 +176,13 @@ if (startDate && endDate) {
         custoPorConversao: conv ? (cst/conv).toFixed(2) : '0'
       };
     });
+    
     resumo.ctr = resumo.cliques && resumo.impressões ? ((resumo.cliques/resumo.impressões)*100).toFixed(2) : '0';
     resumo.taxaConversao = resumo.conversões && resumo.cliques ? ((resumo.conversões/resumo.cliques)*100).toFixed(2) : '0';
     resumo.custoPorConversao = resumo.conversões ? (resumo.custo/resumo.conversões).toFixed(2) : '0';
+
+    console.log('Resumo calculado:', resumo);
+    console.log('Campanhas encontradas:', campanhasArr.length);
 
     return {
       statusCode: 200,
@@ -119,15 +190,28 @@ if (startDate && endDate) {
       body: JSON.stringify({
         success: true,
         summary: resumo,
-        campaigns: campanhasArr
+        campaigns: campanhasArr,
+        debug: {
+          clientId,
+          startDate,
+          endDate,
+          totalRowsFound: data.length,
+          campaignsFound: campanhasArr.length
+        }
       })
     };
 
   } catch (error) {
+    console.error('Erro na função:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Erro interno do servidor', message: error.message })
+      body: JSON.stringify({ 
+        error: 'Erro interno do servidor', 
+        message: error.message,
+        stack: error.stack 
+      })
     };
   }
 };
+
