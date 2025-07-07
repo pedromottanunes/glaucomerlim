@@ -47,14 +47,15 @@ exports.handler = async function(event, context) {
       .filter(row => row.ID_Cliente === clientId);
 
     // Filtra por data se informado
-    if (startDate && endDate) {
-      const s = new Date(startDate);
-      const e = new Date(endDate);
-      data = data.filter(row => {
-        const dt = new Date(row.Data_Referencia);
-        return dt >= s && dt <= e;
-      });
-    }
+if (startDate && endDate) {
+  // compara só o trecho da data, ignora hora!
+  data = data.filter(row => {
+    if (!row.Data_Referencia) return false;
+    const dataRow = row.Data_Referencia.substring(0, 10); // "YYYY-MM-DD"
+    return dataRow >= startDate && dataRow <= endDate;
+  });
+}
+
 
     // Se não houver dados, retorna vazio
     if (!data.length) {
