@@ -19,6 +19,7 @@
     .metric-value{font-size:1.35rem;font-weight:600;color:#3576f6;margin-bottom:2px}
     .metric-label{font-size:0.92rem;color:#5c6c80;font-weight:500}
     .loading{color:#7c829a;font-style:italic}
+    .error{color:#c93434;font-style:italic}
     .feedbacks-title{font-size:1.07rem;color:#3576f6;font-weight:600;margin-bottom:6px}
     .feedback-list{width:96%;max-height:170px;overflow-y:auto;margin-bottom:2px}
     .feedback-card{background:#f3f7fa;border-radius:11px;padding:12px 10px;margin-bottom:8px;border:1px solid #e0e6ef}
@@ -26,6 +27,7 @@
     .feedback-summary{font-size:1.06rem;color:#222;font-weight:500;margin:3px 0 0 0}
     .feedback-full{font-size:0.97rem;color:#454c58;margin-top:2px}
     .period-filters{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+    .debug-info{background:#f0f0f0;border-radius:8px;padding:8px;margin-top:10px;font-size:0.85rem;color:#666;display:none;}
     @media(max-width:470px){.container{max-width:99vw;}}
   </style>
 </head>
@@ -38,17 +40,20 @@
       </div>
     </div>
 
-
     <div class="dashboard-card">
       <label class="select-label" for="selectClient">Selecione o Cliente:</label>
       <select id="selectClient"><option value="">Carregando clientes...</option></select>
-<div id="periodInfo" style="font-size:1rem;color:#797979;margin-bottom:12px;">
-  Dados das métricas de sete dias atrás.
-</div>
+      <div id="periodInfo" style="font-size:1rem;color:#797979;margin-bottom:12px;">
+        Dados das métricas de sete dias atrás.
+      </div>
 
       <div id="metricsPanel" style="margin-top:12px;width:100%;">
         <div class="loading" id="metricsLoading">Selecione um cliente para ver as métricas...</div>
       </div>
+      
+      <!-- Área de debug (oculta por padrão) -->
+      <div id="debugInfo" class="debug-info"></div>
+      <button id="toggleDebug" style="margin-top:10px;padding:5px 10px;font-size:0.8rem;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;">Mostrar Debug</button>
     </div>
 
     <div class="dashboard-card">
@@ -64,8 +69,24 @@
   const selectClient = document.getElementById('selectClient');
   const metricsPanel = document.getElementById('metricsPanel');
   const feedbacksPanel = document.getElementById('feedbacksPanel');
+  const debugInfo = document.getElementById('debugInfo');
+  const toggleDebugBtn = document.getElementById('toggleDebug');
 
   let currentClientId = '';
+  let debugMode = false;
+
+  // Toggle debug mode
+  toggleDebugBtn.addEventListener('click', function() {
+    debugMode = !debugMode;
+    debugInfo.style.display = debugMode ? 'block' : 'none';
+    toggleDebugBtn.textContent = debugMode ? 'Ocultar Debug' : 'Mostrar Debug';
+  });
+
+  function showDebugInfo(info) {
+    if (debugMode) {
+      debugInfo.innerHTML = `<strong>Debug Info:</strong><br><pre>${JSON.stringify(info, null, 2)}</pre>`;
+    }
+  }
 
   async function fetchClients() {
     try {
@@ -76,23 +97,43 @@
         data.data.forEach(c => {
           selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
+        showDebugInfo({ action: 'fetchClients', success: true, clientsCount: data.data.length });
       } else {
         selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
+        showDebugInfo({ action: 'fetchClients', success: false, data });
       }
-    } catch {
+    } catch (error) {
       selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
+      showDebugInfo({ action: 'fetchClients', error: error.message });
     }
   }
 
   async function fetchMetrics(clientId, startDate = '', endDate = '') {
     metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
+    
     let url = `/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`;
     if (startDate && endDate) {
       url += `&startDate=${startDate}&endDate=${endDate}`;
     }
+    
+    showDebugInfo({ 
+      action: 'fetchMetrics', 
+      clientId, 
+      startDate, 
+      endDate, 
+      url 
+    });
+    
     try {
       const resp = await fetch(url);
       const result = await resp.json();
+      
+      showDebugInfo({ 
+        action: 'fetchMetrics', 
+        response: result,
+        status: resp.status 
+      });
+      
       if (result.success && (result.summary || result.campaigns)) {
         // Exibir resumo
         const s = result.summary || {};
@@ -106,6 +147,7 @@
             <div class="metric-card"><div class="metric-value">${s.custoPorConversao ?? '-'}</div><div class="metric-label">Custo/Conversão Geral</div></div>
           </div>
           <div style="font-size:1.08rem;margin-bottom:5px;margin-top:8px;"><b>Métricas por Campanha</b></div>`;
+        
         if (result.campaigns && result.campaigns.length) {
           html += `<div style="width:99%">`;
           result.campaigns.forEach(c => {
@@ -126,14 +168,19 @@
           });
           html += `</div>`;
         } else {
-          html += `<div class="loading" style="color:#c93434;">Nenhuma campanha encontrada no período.</div>`;
+          html += `<div class="error">Nenhuma campanha encontrada no período.</div>`;
         }
         metricsPanel.innerHTML = html;
       } else {
-        metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Nenhuma métrica encontrada para este cliente/período.</div>`;
+        let errorMsg = 'Nenhuma métrica encontrada para este cliente/período.';
+        if (result.debug && result.debug.message) {
+          errorMsg += ` (${result.debug.message})`;
+        }
+        metricsPanel.innerHTML = `<div class="error">${errorMsg}</div>`;
       }
     } catch (e) {
-      metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar métricas.</div>`;
+      metricsPanel.innerHTML = `<div class="error">Erro ao carregar métricas: ${e.message}</div>`;
+      showDebugInfo({ action: 'fetchMetrics', error: e.message, stack: e.stack });
     }
   }
 
@@ -142,6 +189,13 @@ async function fetchFeedbacks(clientId) {
   try {
     const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
     const result = await resp.json();
+    
+    showDebugInfo({ 
+      action: 'fetchFeedbacks', 
+      clientId, 
+      response: result 
+    });
+    
     if (result.success && Array.isArray(result.data) && result.data.length > 0) {
       // Ordena do mais recente ao mais antigo, se desejar (usando Data_Feedback no formato DD/MM/AAAA)
       result.data.sort((a, b) => {
@@ -163,8 +217,9 @@ async function fetchFeedbacks(clientId) {
     } else {
       feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
     }
-  } catch {
-    feedbacksPanel.innerHTML = `<div class="loading" style="color:#c93434;">Erro ao carregar feedbacks.</div>`;
+  } catch (error) {
+    feedbacksPanel.innerHTML = `<div class="error">Erro ao carregar feedbacks: ${error.message}</div>`;
+    showDebugInfo({ action: 'fetchFeedbacks', error: error.message });
   }
 }
 
@@ -176,15 +231,26 @@ async function fetchFeedbacks(clientId) {
     const hoje = new Date().toISOString().split('T')[0];
     const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000)
       .toISOString().split('T')[0];
+    
+    showDebugInfo({ 
+      action: 'clientSelected', 
+      clientId, 
+      hoje, 
+      seteDiasAtras 
+    });
+    
     fetchMetrics(clientId, seteDiasAtras, hoje);
     fetchFeedbacks(clientId);
   } else {
     metricsPanel.innerHTML   = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
     feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
+    showDebugInfo({ action: 'clientDeselected' });
   }
 });
-
 
   // Inicialização
   fetchClients();
 </script>
+</body>
+</html>
+
