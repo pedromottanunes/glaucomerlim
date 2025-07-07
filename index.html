@@ -42,11 +42,10 @@
     <div class="dashboard-card">
       <label class="select-label" for="selectClient">Selecione o Cliente:</label>
       <select id="selectClient"><option value="">Carregando clientes...</option></select>
-      <div class="period-filters">
-        <input type="date" id="startDate">
-        <input type="date" id="endDate">
-        <button id="btnFiltrar" style="padding:7px 15px;border-radius:8px;background:#3576f6;color:#fff;border:none;">Filtrar</button>
-      </div>
+<div id="periodInfo" style="font-size:1rem;color:#797979;margin-bottom:12px;">
+  Dados das métricas de sete dias atrás.
+</div>
+
       <div id="metricsPanel" style="margin-top:12px;width:100%;">
         <div class="loading" id="metricsLoading">Selecione um cliente para ver as métricas...</div>
       </div>
@@ -65,9 +64,6 @@
   const selectClient = document.getElementById('selectClient');
   const metricsPanel = document.getElementById('metricsPanel');
   const feedbacksPanel = document.getElementById('feedbacksPanel');
-  const btnFiltrar = document.getElementById('btnFiltrar');
-  const inputStart = document.getElementById('startDate');
-  const inputEnd = document.getElementById('endDate');
 
   let currentClientId = '';
 
@@ -173,34 +169,21 @@ async function fetchFeedbacks(clientId) {
 }
 
   // Handler do select
-  selectClient.addEventListener('change', function() {
-    const clientId = this.value;
-    currentClientId = clientId;
-    // Limpa os campos de data
-    inputStart.value = '';
-    inputEnd.value = '';
-    if (clientId) {
-      fetchMetrics(clientId);
-      fetchFeedbacks(clientId);
-    } else {
-      metricsPanel.innerHTML = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
-      feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
-    }
-  });
+ selectClient.addEventListener('change', function() {
+  const clientId = this.value;
+  currentClientId = clientId;
+  if (clientId) {
+    const hoje = new Date().toISOString().split('T')[0];
+    const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000)
+      .toISOString().split('T')[0];
+    fetchMetrics(clientId, seteDiasAtras, hoje);
+    fetchFeedbacks(clientId);
+  } else {
+    metricsPanel.innerHTML   = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
+    feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
+  }
+});
 
-  btnFiltrar.addEventListener('click', function() {
-    if (!currentClientId) {
-      metricsPanel.innerHTML = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
-      return;
-    }
-    const start = inputStart.value;
-    const end = inputEnd.value;
-    if (!start || !end) {
-      metricsPanel.innerHTML = `<div class="loading" style="color:#c93434;">Selecione o período inicial e final.</div>`;
-      return;
-    }
-    fetchMetrics(currentClientId, start, end);
-  });
 
   // Inicialização
   fetchClients();
