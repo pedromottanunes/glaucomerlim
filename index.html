@@ -44,9 +44,25 @@
       <label class="select-label" for="selectClient">Selecione o Cliente:</label>
       <select id="selectClient"><option value="">Carregando clientes...</option></select>
       <div id="periodInfo" style="font-size:1rem;color:#797979;margin-bottom:12px;">
+       
         Dados das métricas de sete dias atrás.
       </div>
 
+<!-- Botões de atualização -->
+<div id="webhookActions" style="display:none; gap:12px; margin-bottom:14px; width:100%; align-items:flex-end;">
+  <div style="display:flex; flex-direction:column; align-items:flex-start;">
+    <label for="inputDiasMetricas" style="font-size:0.97rem; color:#444; margin-bottom:4px;">Dias para atualizar métricas:</label>
+    <input id="inputDiasMetricas" type="number" min="1" value="7" style="padding:5px 10px; font-size:1rem; border-radius:7px; border:1px solid #d0d6e1; width:85px;">
+  </div>
+  <button id="btnAtualizarMetricas" style="padding:7px 18px;background:#3576f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem; height:38px;">
+    🔄 Atualizar Métricas
+  </button>
+  <button id="btnPedirFeedback" style="padding:7px 18px;background:#22b573;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem; height:38px;">
+    ✉️ Pedir Feedback
+  </button>
+</div>
+
+      
       <div id="metricsPanel" style="margin-top:12px;width:100%;">
         <div class="loading" id="metricsLoading">Selecione um cliente para ver as métricas...</div>
       </div>
@@ -224,10 +240,13 @@ async function fetchFeedbacks(clientId) {
 }
 
   // Handler do select
- selectClient.addEventListener('change', function() {
+selectClient.addEventListener('change', function() {
   const clientId = this.value;
   currentClientId = clientId;
+  const webhookActions = document.getElementById('webhookActions');
   if (clientId) {
+    webhookActions.style.display = 'flex'; // mostra os botões
+
     const hoje = new Date().toISOString().split('T')[0];
     const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000)
       .toISOString().split('T')[0];
@@ -242,14 +261,65 @@ async function fetchFeedbacks(clientId) {
     fetchMetrics(clientId, seteDiasAtras, hoje);
     fetchFeedbacks(clientId);
   } else {
+    webhookActions.style.display = 'none'; // esconde os botões
     metricsPanel.innerHTML   = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
     feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
     showDebugInfo({ action: 'clientDeselected' });
   }
 });
 
+
   // Inicialização
   fetchClients();
+
+// Substitua pelo link real do seu webhook no Make
+const WEBHOOK_ATUALIZAR = 'https://hook.us2.make.com/krgipaz4450vt7v8erl5jtpzs5eyakfj';
+const WEBHOOK_FEEDBACK = 'https://hook.us2.make.com/noczw6wogomt36ybc37o5pfa1c146yjm';
+
+// Envia o ID do cliente para o Webhook de atualização
+document.getElementById('btnAtualizarMetricas').addEventListener('click', async function() {
+  if (!currentClientId) return alert('Selecione um cliente!');
+  const dias = parseInt(document.getElementById('inputDiasMetricas').value, 10) || 7;
+  if (dias < 1) return alert('Informe um número de dias válido (maior que zero).');
+  this.disabled = true;
+  this.textContent = 'Aguarde...';
+  try {
+    await fetch(WEBHOOK_ATUALIZAR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: currentClientId, dias })
+    });
+    alert(`Solicitação enviada para atualizar as métricas dos últimos ${dias} dias.`);
+  } catch (err) {
+    alert('Erro ao acionar o webhook.');
+  }
+  this.disabled = false;
+  this.textContent = '🔄 Atualizar Métricas';
+});
+
+
+// Envia o ID do cliente para o Webhook de feedback
+document.getElementById('btnPedirFeedback').addEventListener('click', async function() {
+  if (!currentClientId) return alert('Selecione um cliente!');
+  this.disabled = true;
+  this.textContent = 'Enviando...';
+  try {
+    await fetch(WEBHOOK_FEEDBACK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: currentClientId })
+    });
+    alert('Solicitação enviada para pedir feedback.');
+  } catch (err) {
+    alert('Erro ao acionar o webhook.');
+  }
+  this.disabled = false;
+  this.textContent = '✉️ Pedir Feedback';
+});
+
+
+   
+   
 </script>
 </body>
 </html>
