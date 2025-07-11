@@ -3,5 +3,5 @@ self.addEventListener('install', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  // padrão: deixar o navegador lidar com as requisições
+  // Padrão: deixar o navegador lidar com as requisições
 });
