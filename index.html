@@ -2,85 +2,686 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Glauco Merlim APP</title>
+  <title>Central de Controle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1EEc4LUVQG8YjoJYukOt8ACooDKalze1C">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#f8f9fa;min-height:100vh;display:flex;flex-direction:column}
-    .container{width:100%;max-width:480px;margin:0 auto 60px auto;flex:1;display:flex;flex-direction:column;align-items:center}
-    .settings-header{width:90%;display:flex;justify-content:space-between;align-items:center;margin:28px 0 18px}
-    .settings-title{font-size:2rem;font-weight:600;color:#222}
-    .profile-pic{width:38px;height:38px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px #e4e4e4}
-    .dashboard-card{background:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(75,0,160,.07);padding:22px 0 20px;display:flex;flex-direction:column;align-items:center;width:96%;margin:12px 0}
-    .select-label{font-size:1.06rem;font-weight:500;color:#2e3e66;margin-bottom:8px;}
-    select,input[type="date"]{padding:7px 14px;font-size:1.01rem;border-radius:8px;border:1.4px solid #e0e5ee;margin-bottom:12px;}
-    .metrics-container{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:98%;margin:0 auto}
-    .metric-card{background:#f8f9fa;border-radius:12px;padding:13px 8px;text-align:center;border:1px solid #e9ecef}
-    .metric-value{font-size:1.35rem;font-weight:600;color:#3576f6;margin-bottom:2px}
-    .metric-label{font-size:0.92rem;color:#5c6c80;font-weight:500}
-    .loading{color:#7c829a;font-style:italic}
-    .error{color:#c93434;font-style:italic}
-    .feedbacks-title{font-size:1.07rem;color:#3576f6;font-weight:600;margin-bottom:6px}
-    .feedback-list{width:96%;max-height:170px;overflow-y:auto;margin-bottom:2px}
-    .feedback-card{background:#f3f7fa;border-radius:11px;padding:12px 10px;margin-bottom:8px;border:1px solid #e0e6ef}
-    .feedback-date{font-size:0.91rem;color:#7988a6}
-    .feedback-summary{font-size:1.06rem;color:#222;font-weight:500;margin:3px 0 0 0}
-    .feedback-full{font-size:0.97rem;color:#454c58;margin-top:2px}
-    .period-filters{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
-    .debug-info{background:#f0f0f0;border-radius:8px;padding:8px;margin-top:10px;font-size:0.85rem;color:#666;display:none;}
-    @media(max-width:470px){.container{max-width:99vw;}}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-color: #3576f6;
+      --primary-dark: #2563eb;
+      --primary-light: #60a5fa;
+      --success-color: #22c55e;
+      --success-dark: #16a34a;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-light: #f1f5f9;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-light);
+    }
+
+    .header-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title::before {
+      content: "🎯";
+      font-size: 1.5rem;
+    }
+
+    .profile-container {
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .profile-container:hover {
+      transform: scale(1.05);
+    }
+
+    .profile-pic {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary-color);
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+    }
+
+    .profile-pic:hover {
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-dark);
+    }
+
+    /* Global Update Section */
+    .global-update-section {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-light);
+    }
+
+    .global-update-content {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      flex-wrap: nowrap;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      flex: 0 0 auto;
+      min-width: 140px;
+    }
+
+    .input-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .input-label::before {
+      content: "📊";
+      font-size: 0.875rem;
+    }
+
+    .input-field {
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      transition: all 0.3s ease;
+      font-weight: 500;
+      width: 100px;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgb(53 118 246 / 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+
+    .dashboard-card:hover {
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .select-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .select-label::before {
+      content: "👤";
+      font-size: 1rem;
+    }
+
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgb(53 118 246 / 0.1);
+    }
+
+    /* Webhook Actions */
+    .webhook-actions {
+      display: none;
+      gap: 16px;
+      margin: 20px 0;
+      padding: 20px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Metrics */
+    .metrics-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .metric-card {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px 16px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .metric-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    /* Campaign Cards */
+    .campaign-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .campaign-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .campaign-header {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .campaign-header::before {
+      content: "📈";
+      font-size: 1rem;
+    }
+
+    .campaign-period {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .campaign-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px 16px;
+      margin-top: 12px;
+    }
+
+    .campaign-metric {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .campaign-metric strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Feedback Section */
+    .feedbacks-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feedbacks-title::before {
+      content: "💬";
+      font-size: 1.25rem;
+    }
+
+    .feedback-list {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .feedback-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .feedback-list::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+    }
+
+    .feedback-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .feedback-list::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .feedback-card {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .feedback-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+    }
+
+    .feedback-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .feedback-date {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .feedback-summary {
+      font-size: 1rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .feedback-source {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Status Messages */
+    .loading {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .loading::before {
+      content: "⏳";
+      font-size: 1.2rem;
+      animation: pulse 2s infinite;
+    }
+
+    .error {
+      color: var(--danger-color);
+      font-weight: 500;
+      text-align: center;
+      padding: 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Debug Section */
+    .debug-info {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 20px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      display: none;
+      font-family: 'Courier New', monospace;
+    }
+
+    .debug-toggle {
+      margin-top: 16px;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .debug-toggle:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-card {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px;
+      }
+
+      .header {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .header-title {
+        font-size: 1.5rem;
+      }
+
+      .dashboard-card {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .global-update-content {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 12px;
+      }
+
+      .input-group {
+        min-width: 120px;
+        flex: 0 0 auto;
+      }
+
+      .btn {
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
+
+      .metrics-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .campaign-metrics {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header-title {
+        font-size: 1.25rem;
+      }
+
+      .profile-pic {
+        width: 40px;
+        height: 40px;
+      }
+
+      .metrics-container {
+        grid-template-columns: 1fr;
+      }
+
+      .campaign-metrics {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-
-
-
-  
   <div class="container">
-    <div class="settings-header">
-      <span class="settings-title">Central de Controle</span>
-      <div id="logoArea" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="header-title">Central de Controle</h1>
+      <div id="logoArea" class="profile-container">
         <img id="profileLogo" class="profile-pic" src="https://drive.google.com/thumbnail?id=14237UzUYcnRjuY-FJoF8MmyS_0k8Mc_J" alt="Logo">
       </div>
     </div>
 
-
-      <!-- Botão geral de atualizar métricas -->
-<div id="updateAllWrapper" style="width:100%;max-width:480px;margin:30px auto 0 auto;display:flex;gap:18px;align-items:flex-end;justify-content:flex-start;">
-  <div style="display:flex;flex-direction:column;">
-    <label for="inputDiasMetricasGlobal" style="font-size:1rem;color:#3576f6;font-weight:500;margin-bottom:4px;">Dias para atualizar métricas:</label>
-    <input id="inputDiasMetricasGlobal" type="number" min="1" value="7" style="padding:5px 10px; font-size:1rem; border-radius:7px; border:1px solid #d0d6e1; width:85px;">
-  </div>
-  <button id="btnAtualizarMetricasGlobal" style="padding:10px 18px; background:#3576f6; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:1.08rem; height:40px; font-weight:500;">
-    🔄 Atualizar Métricas de Todos
-  </button>
-</div>
-
-    
-
-    <div class="dashboard-card">
-      <label class="select-label" for="selectClient">Selecione o Cliente:</label>
-      <select id="selectClient"><option value="">Carregando clientes...</option></select>
-      
-
-<!-- Botões de atualização -->
-<div id="webhookActions" style="display:none; gap:12px; margin-bottom:14px; width:100%; align-items:flex-end;">
- 
-  <button id="btnPedirFeedback" style="padding:7px 18px;background:#22b573;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem; height:38px;">
-    ✉️ Pedir Feedback
-  </button>
-</div>
-
-      
-      <div id="metricsPanel" style="margin-top:12px;width:100%;">
-        <div class="loading" id="metricsLoading">Selecione um cliente para ver as métricas...</div>
+    <!-- Global Update Section -->
+    <div class="global-update-section">
+      <div class="global-update-content">
+        <div class="input-group">
+          <label for="inputDiasMetricasGlobal" class="input-label">Dias para atualizar métricas:</label>
+          <input id="inputDiasMetricasGlobal" type="number" min="1" value="7" class="input-field">
+        </div>
+        <button id="btnAtualizarMetricasGlobal" class="btn btn-primary">
+          <i class="fas fa-sync-alt"></i>
+          Atualizar Métricas de Todos
+        </button>
       </div>
-      
-      <!-- Área de debug (oculta por padrão) -->
-      <div id="debugInfo" class="debug-info"></div>
-      <button id="toggleDebug" style="margin-top:10px;padding:5px 10px;font-size:0.8rem;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;">Mostrar Debug</button>
     </div>
 
+    <!-- Main Dashboard Card -->
+    <div class="dashboard-card">
+      <label class="select-label" for="selectClient">Selecione o Cliente:</label>
+      <select id="selectClient">
+        <option value="">Carregando clientes...</option>
+      </select>
+      
+      <!-- Webhook Actions -->
+      <div id="webhookActions" class="webhook-actions">
+        <button id="btnPedirFeedback" class="btn btn-success">
+          <i class="fas fa-envelope"></i>
+          Pedir Feedback
+        </button>
+      </div>
+      
+      <!-- Metrics Panel -->
+      <div id="metricsPanel">
+        <div class="loading">Selecione um cliente para ver as métricas...</div>
+      </div>
+      
+      <!-- Debug Section -->
+      <div id="debugInfo" class="debug-info"></div>
+      <button id="toggleDebug" class="debug-toggle">Mostrar Debug</button>
+    </div>
+
+    <!-- Feedbacks Card -->
     <div class="dashboard-card">
       <div class="feedbacks-title">Feedbacks do Cliente</div>
       <div id="feedbacksPanel">
@@ -89,248 +690,266 @@
     </div>
   </div>
 
- <script>
-  // Dropdown dinâmico de clientes
-  const selectClient = document.getElementById('selectClient');
-  const metricsPanel = document.getElementById('metricsPanel');
-  const feedbacksPanel = document.getElementById('feedbacksPanel');
-  const debugInfo = document.getElementById('debugInfo');
-  const toggleDebugBtn = document.getElementById('toggleDebug');
+  <script>
+    // Dropdown dinâmico de clientes
+    const selectClient = document.getElementById('selectClient');
+    const metricsPanel = document.getElementById('metricsPanel');
+    const feedbacksPanel = document.getElementById('feedbacksPanel');
+    const debugInfo = document.getElementById('debugInfo');
+    const toggleDebugBtn = document.getElementById('toggleDebug');
 
-  let currentClientId = '';
-  let debugMode = false;
+    let currentClientId = '';
+    let debugMode = false;
 
-  // Toggle debug mode
-  toggleDebugBtn.addEventListener('click', function() {
-    debugMode = !debugMode;
-    debugInfo.style.display = debugMode ? 'block' : 'none';
-    toggleDebugBtn.textContent = debugMode ? 'Ocultar Debug' : 'Mostrar Debug';
-  });
-
-  function showDebugInfo(info) {
-    if (debugMode) {
-      debugInfo.innerHTML = `<strong>Debug Info:</strong><br><pre>${JSON.stringify(info, null, 2)}</pre>`;
-    }
-  }
-
-  async function fetchClients() {
-    try {
-      const resp = await fetch('/.netlify/functions/get-clients');
-      const data = await resp.json();
-      if (data.success && Array.isArray(data.data)) {
-        selectClient.innerHTML = '<option value="">Selecione...</option>';
-        data.data.forEach(c => {
-          selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-        showDebugInfo({ action: 'fetchClients', success: true, clientsCount: data.data.length });
-      } else {
-        selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
-        showDebugInfo({ action: 'fetchClients', success: false, data });
-      }
-    } catch (error) {
-      selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
-      showDebugInfo({ action: 'fetchClients', error: error.message });
-    }
-  }
-
-  async function fetchMetrics(clientId, startDate = '', endDate = '') {
-    metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
-    
-    let url = `/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`;
-    if (startDate && endDate) {
-      url += `&startDate=${startDate}&endDate=${endDate}`;
-    }
-    
-    showDebugInfo({ 
-      action: 'fetchMetrics', 
-      clientId, 
-      startDate, 
-      endDate, 
-      url 
+    // Toggle debug mode
+    toggleDebugBtn.addEventListener('click', function() {
+      debugMode = !debugMode;
+      debugInfo.style.display = debugMode ? 'block' : 'none';
+      toggleDebugBtn.textContent = debugMode ? 'Ocultar Debug' : 'Mostrar Debug';
     });
-    
-    try {
-      const resp = await fetch(url);
-      const result = await resp.json();
+
+    function showDebugInfo(info) {
+      if (debugMode) {
+        debugInfo.innerHTML = `<strong>Debug Info:</strong><br><pre>${JSON.stringify(info, null, 2)}</pre>`;
+      }
+    }
+
+    async function fetchClients() {
+      try {
+        const resp = await fetch('/.netlify/functions/get-clients');
+        const data = await resp.json();
+        if (data.success && Array.isArray(data.data)) {
+          selectClient.innerHTML = '<option value="">Selecione...</option>';
+          data.data.forEach(c => {
+            selectClient.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+          });
+          showDebugInfo({ action: 'fetchClients', success: true, clientsCount: data.data.length });
+        } else {
+          selectClient.innerHTML = '<option value="">Nenhum cliente encontrado</option>';
+          showDebugInfo({ action: 'fetchClients', success: false, data });
+        }
+      } catch (error) {
+        selectClient.innerHTML = '<option value="">Erro ao buscar clientes</option>';
+        showDebugInfo({ action: 'fetchClients', error: error.message });
+      }
+    }
+
+    async function fetchMetrics(clientId, startDate = '', endDate = '') {
+      metricsPanel.innerHTML = `<div class="loading">Carregando métricas...</div>`;
+      
+      let url = `/.netlify/functions/google-ads-metrics?clientId=${encodeURIComponent(clientId)}`;
+      if (startDate && endDate) {
+        url += `&startDate=${startDate}&endDate=${endDate}`;
+      }
       
       showDebugInfo({ 
         action: 'fetchMetrics', 
-        response: result,
-        status: resp.status 
+        clientId, 
+        startDate, 
+        endDate, 
+        url 
       });
       
-      if (result.success && (result.summary || result.campaigns)) {
-        // Exibir resumo
-        const s = result.summary || {};
-        let html = `<div class="metrics-container" style="margin-bottom:10px;">
-            <div class="metric-card"><div class="metric-value">${s.impressões ?? '-'}</div><div class="metric-label">Impressões (Total)</div></div>
-            <div class="metric-card"><div class="metric-value">${s.cliques ?? '-'}</div><div class="metric-label">Cliques (Total)</div></div>
-            <div class="metric-card"><div class="metric-value">${s.conversões ?? '-'}</div><div class="metric-label">Conversões (Total)</div></div>
-            <div class="metric-card"><div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div><div class="metric-label">Custo (Total)</div></div>
-            <div class="metric-card"><div class="metric-value">${s.ctr ?? '-'}%</div><div class="metric-label">CTR Geral</div></div>
-            <div class="metric-card"><div class="metric-value">${s.taxaConversao ?? '-'}%</div><div class="metric-label">Taxa Conversão Geral</div></div>
-            <div class="metric-card"><div class="metric-value">${s.custoPorConversao ?? '-'}</div><div class="metric-label">Custo/Conversão Geral</div></div>
-          </div>
-          <div style="font-size:1.08rem;margin-bottom:5px;margin-top:8px;"><b>Métricas por Campanha</b></div>`;
+      try {
+        const resp = await fetch(url);
+        const result = await resp.json();
         
-        if (result.campaigns && result.campaigns.length) {
-          html += `<div style="width:99%">`;
-          result.campaigns.forEach(c => {
-            html += `
-              <div style="background:#f9fafd;border-radius:9px;padding:8px 7px 7px 7px;margin-bottom:8px;border:1px solid #e4e8ef;">
-                <b>${c.campanha}</b> <span style="font-size:0.97rem;color:#4975b2;">${c.periodo || ''}</span>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px 8px;margin-top:7px;">
-                  <span><b>Imp:</b> ${c.impressoes}</span>
-                  <span><b>Clk:</b> ${c.cliques}</span>
-                  <span><b>Conv:</b> ${c.conversoes}</span>
-                  <span><b>R$:</b> ${Number(c.custo).toFixed(2)}</span>
-                  <span><b>CTR:</b> ${c.ctr}%</span>
-                  <span><b>Tx Conv:</b> ${c.taxaConversao}%</span>
-                  <span><b>CPC:</b> ${c.custoPorConversao}</span>
-                </div>
+        showDebugInfo({ 
+          action: 'fetchMetrics', 
+          response: result,
+          status: resp.status 
+        });
+        
+        if (result.success && (result.summary || result.campaigns)) {
+          // Exibir resumo
+          const s = result.summary || {};
+          let html = `<div class="metrics-container">
+              <div class="metric-card">
+                <div class="metric-value">${s.impressões ?? '-'}</div>
+                <div class="metric-label">Impressões (Total)</div>
               </div>
-            `;
-          });
-          html += `</div>`;
-        } else {
-          html += `<div class="error">Nenhuma campanha encontrada no período.</div>`;
-        }
-        metricsPanel.innerHTML = html;
-      } else {
-        let errorMsg = 'Nenhuma métrica encontrada para este cliente/período.';
-        if (result.debug && result.debug.message) {
-          errorMsg += ` (${result.debug.message})`;
-        }
-        metricsPanel.innerHTML = `<div class="error">${errorMsg}</div>`;
-      }
-    } catch (e) {
-      metricsPanel.innerHTML = `<div class="error">Erro ao carregar métricas: ${e.message}</div>`;
-      showDebugInfo({ action: 'fetchMetrics', error: e.message, stack: e.stack });
-    }
-  }
-
-async function fetchFeedbacks(clientId) {
-  feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
-  try {
-    const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
-    const result = await resp.json();
-    
-    showDebugInfo({ 
-      action: 'fetchFeedbacks', 
-      clientId, 
-      response: result 
-    });
-    
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-      // Ordena do mais recente ao mais antigo, se desejar (usando Data_Feedback no formato DD/MM/AAAA)
-      result.data.sort((a, b) => {
-        const dA = a.Data_Feedback?.split('/').reverse().join('-') || '';
-        const dB = b.Data_Feedback?.split('/').reverse().join('-') || '';
-        return new Date(dB) - new Date(dA);
-      });
-      feedbacksPanel.innerHTML = `
-        <div class="feedback-list">
-          ${result.data.map(f => `
-            <div class="feedback-card">
-              <div class="feedback-date">${f.Data_Feedback || ''}</div>
-              <div class="feedback-summary">${f.Resumo || '-'}</div>
-              <div class="feedback-date" style="font-size:0.89rem;color:#757;">${f.Fonte || ''}</div>
+              <div class="metric-card">
+                <div class="metric-value">${s.cliques ?? '-'}</div>
+                <div class="metric-label">Cliques (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.conversões ?? '-'}</div>
+                <div class="metric-label">Conversões (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div>
+                <div class="metric-label">Custo (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.ctr ?? '-'}%</div>
+                <div class="metric-label">CTR Geral</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.taxaConversao ?? '-'}%</div>
+                <div class="metric-label">Taxa Conversão Geral</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.custoPorConversao ?? '-'}</div>
+                <div class="metric-label">Custo/Conversão Geral</div>
+              </div>
             </div>
-          `).join('')}
-        </div>
-      `;
-    } else {
-      feedbacksPanel.innerHTML = `<div class="loading" style="color:#333;">Nenhum feedback cadastrado para este cliente.</div>`;
+            <div class="card-title" style="margin-top: 24px; margin-bottom: 16px;">
+              <i class="fas fa-chart-line"></i>
+              Métricas por Campanha
+            </div>`;
+          
+          if (result.campaigns && result.campaigns.length) {
+            result.campaigns.forEach(c => {
+              html += `
+                <div class="campaign-card">
+                  <div class="campaign-header">
+                    ${c.campanha} 
+                    <span class="campaign-period">${c.periodo || ''}</span>
+                  </div>
+                  <div class="campaign-metrics">
+                    <div class="campaign-metric"><strong>Imp:</strong> ${c.impressoes}</div>
+                    <div class="campaign-metric"><strong>Clk:</strong> ${c.cliques}</div>
+                    <div class="campaign-metric"><strong>Conv:</strong> ${c.conversoes}</div>
+                    <div class="campaign-metric"><strong>R$:</strong> ${Number(c.custo).toFixed(2)}</div>
+                    <div class="campaign-metric"><strong>CTR:</strong> ${c.ctr}%</div>
+                    <div class="campaign-metric"><strong>Tx Conv:</strong> ${c.taxaConversao}%</div>
+                    <div class="campaign-metric"><strong>CPC:</strong> ${c.custoPorConversao}</div>
+                  </div>
+                </div>
+              `;
+            });
+          } else {
+            html += `<div class="error">Nenhuma campanha encontrada no período.</div>`;
+          }
+          metricsPanel.innerHTML = html;
+        } else {
+          let errorMsg = 'Nenhuma métrica encontrada para este cliente/período.';
+          if (result.debug && result.debug.message) {
+            errorMsg += ` (${result.debug.message})`;
+          }
+          metricsPanel.innerHTML = `<div class="error">${errorMsg}</div>`;
+        }
+      } catch (e) {
+        metricsPanel.innerHTML = `<div class="error">Erro ao carregar métricas: ${e.message}</div>`;
+        showDebugInfo({ action: 'fetchMetrics', error: e.message, stack: e.stack });
+      }
     }
-  } catch (error) {
-    feedbacksPanel.innerHTML = `<div class="error">Erro ao carregar feedbacks: ${error.message}</div>`;
-    showDebugInfo({ action: 'fetchFeedbacks', error: error.message });
-  }
-}
 
-  // Handler do select
-selectClient.addEventListener('change', function() {
-  const clientId = this.value;
-  currentClientId = clientId;
-  const webhookActions = document.getElementById('webhookActions');
-  if (clientId) {
-    webhookActions.style.display = 'flex'; // mostra os botões
+    async function fetchFeedbacks(clientId) {
+      feedbacksPanel.innerHTML = `<div class="loading">Carregando feedbacks...</div>`;
+      try {
+        const resp = await fetch(`/.netlify/functions/client-feedbacks?clientId=${encodeURIComponent(clientId)}`);
+        const result = await resp.json();
+        
+        showDebugInfo({ 
+          action: 'fetchFeedbacks', 
+          clientId, 
+          response: result 
+        });
+        
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+          // Ordena do mais recente ao mais antigo, se desejar (usando Data_Feedback no formato DD/MM/AAAA)
+          result.data.sort((a, b) => {
+            const dA = a.Data_Feedback?.split('/').reverse().join('-') || '';
+            const dB = b.Data_Feedback?.split('/').reverse().join('-') || '';
+            return new Date(dB) - new Date(dA);
+          });
+          feedbacksPanel.innerHTML = `
+            <div class="feedback-list">
+              ${result.data.map(f => `
+                <div class="feedback-card">
+                  <div class="feedback-date">${f.Data_Feedback || ''}</div>
+                  <div class="feedback-summary">${f.Resumo || '-'}</div>
+                  <div class="feedback-source">${f.Fonte || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          feedbacksPanel.innerHTML = `<div class="loading">Nenhum feedback cadastrado para este cliente.</div>`;
+        }
+      } catch (error) {
+        feedbacksPanel.innerHTML = `<div class="error">Erro ao carregar feedbacks: ${error.message}</div>`;
+        showDebugInfo({ action: 'fetchFeedbacks', error: error.message });
+      }
+    }
 
-    const hoje = new Date().toISOString().split('T')[0];
-    const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000)
-      .toISOString().split('T')[0];
-    
-    showDebugInfo({ 
-      action: 'clientSelected', 
-      clientId, 
-      hoje, 
-      seteDiasAtras 
+    // Handler do select
+    selectClient.addEventListener('change', function() {
+      const clientId = this.value;
+      currentClientId = clientId;
+      const webhookActions = document.getElementById('webhookActions');
+      if (clientId) {
+        webhookActions.style.display = 'flex'; // mostra os botões
+
+        const hoje = new Date().toISOString().split('T')[0];
+        const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000)
+          .toISOString().split('T')[0];
+        
+        showDebugInfo({ 
+          action: 'clientSelected', 
+          clientId, 
+          hoje, 
+          seteDiasAtras 
+        });
+        
+        fetchMetrics(clientId, seteDiasAtras, hoje);
+        fetchFeedbacks(clientId);
+      } else {
+        webhookActions.style.display = 'none'; // esconde os botões
+        metricsPanel.innerHTML   = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
+        feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
+        showDebugInfo({ action: 'clientDeselected' });
+      }
     });
-    
-    fetchMetrics(clientId, seteDiasAtras, hoje);
-    fetchFeedbacks(clientId);
-  } else {
-    webhookActions.style.display = 'none'; // esconde os botões
-    metricsPanel.innerHTML   = `<div class="loading">Selecione um cliente para ver as métricas...</div>`;
-    feedbacksPanel.innerHTML = `<div class="loading">Selecione um cliente para ver os feedbacks...</div>`;
-    showDebugInfo({ action: 'clientDeselected' });
-  }
-});
 
+    // Inicialização
+    fetchClients();
 
-  // Inicialização
-  fetchClients();
+    // Substitua pelo link real do seu webhook no Make
+    const WEBHOOK_FEEDBACK = 'https://hook.us2.make.com/noczw6wogomt36ybc37o5pfa1c146yjm';
 
-// Substitua pelo link real do seu webhook no Make
-const WEBHOOK_FEEDBACK = 'https://hook.us2.make.com/noczw6wogomt36ybc37o5pfa1c146yjm';
-
-
-// Envia o ID do cliente para o Webhook de feedback
-document.getElementById('btnPedirFeedback').addEventListener('click', async function() {
-  if (!currentClientId) return alert('Selecione um cliente!');
-  this.disabled = true;
-  this.textContent = 'Enviando...';
-  try {
-    await fetch(WEBHOOK_FEEDBACK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: currentClientId })
+    // Envia o ID do cliente para o Webhook de feedback
+    document.getElementById('btnPedirFeedback').addEventListener('click', async function() {
+      if (!currentClientId) return alert('Selecione um cliente!');
+      this.disabled = true;
+      this.textContent = 'Enviando...';
+      try {
+        await fetch(WEBHOOK_FEEDBACK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId: currentClientId })
+        });
+        alert('Solicitação enviada para pedir feedback.');
+      } catch (err) {
+        alert('Erro ao acionar o webhook.');
+      }
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-envelope"></i> Pedir Feedback';
     });
-    alert('Solicitação enviada para pedir feedback.');
-  } catch (err) {
-    alert('Erro ao acionar o webhook.');
-  }
-  this.disabled = false;
-  this.textContent = '✉️ Pedir Feedback';
-});
 
-// Link do webhook Make para atualizar todos os clientes
-const WEBHOOK_ATUALIZAR_GLOBAL = 'https://hook.us2.make.com/b4556yrb4lrpzib0pt81qtbpdos5qw33'; // <--- coloque seu link real!
+    // Link do webhook Make para atualizar todos os clientes
+    const WEBHOOK_ATUALIZAR_GLOBAL = 'https://hook.us2.make.com/b4556yrb4lrpzib0pt81qtbpdos5qw33';
 
-document.getElementById('btnAtualizarMetricasGlobal').addEventListener('click', async function() {
-  const dias = parseInt(document.getElementById('inputDiasMetricasGlobal').value, 10) || 7;
-  if (dias < 1) return alert('Informe um número de dias válido (maior que zero).');
-  this.disabled = true;
-  this.textContent = 'Aguarde...';
-  try {
-    await fetch(WEBHOOK_ATUALIZAR_GLOBAL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dias })
+    document.getElementById('btnAtualizarMetricasGlobal').addEventListener('click', async function() {
+      const dias = parseInt(document.getElementById('inputDiasMetricasGlobal').value, 10) || 7;
+      if (dias < 1) return alert('Informe um número de dias válido (maior que zero).');
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aguarde...';
+      try {
+        await fetch(WEBHOOK_ATUALIZAR_GLOBAL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dias })
+        });
+        alert(`Solicitação enviada para atualizar as métricas dos últimos ${dias} dias de todos os clientes.`);
+      } catch (err) {
+        alert('Erro ao acionar o webhook.');
+      }
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Métricas de Todos';
     });
-    alert(`Solicitação enviada para atualizar as métricas dos últimos ${dias} dias de todos os clientes.`);
-  } catch (err) {
-    alert('Erro ao acionar o webhook.');
-  }
-  this.disabled = false;
-  this.textContent = '🔄 Atualizar Métricas de Todos';
-});
-   
-
-
-   
-   
-</script>
+  </script>
 </body>
 </html>
 
