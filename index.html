@@ -194,10 +194,11 @@
       font-size: 1rem;
     }
 
+    /* ALTERAÇÃO 1: Centralização horizontal e ajuste vertical */
     .actions-container {
       display: flex;
-      gap: 15px;
-      margin-top: 5px;
+      justify-content: center; /* Centraliza horizontalmente */
+      margin: 20px 0 10px; /* Ajusta o espaço vertical (topo e fundo) */
     }
 
     .global-update-container {
@@ -441,7 +442,7 @@
       }
       
       .actions-container {
-        flex-direction: column;
+        margin: 15px 0; /* Ajuste para mobile */
       }
       
       .metrics-container {
@@ -527,6 +528,7 @@
         </select>
       </div>
 
+      <!-- ALTERAÇÃO 2: Contêiner do botão agora centralizado -->
       <div id="webhookActions" style="display:none;">
         <div class="actions-container">
           <button id="btnPedirFeedback" class="btn btn-secondary btn-sm">
