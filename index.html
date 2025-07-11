@@ -635,19 +635,44 @@
           response: result,
           status: resp.status 
         });
+
+        
         
         if (result.success && (result.summary || result.campaigns)) {
           // Exibir resumo
           const s = result.summary || {};
           let html = `<div class="metrics-container">
-              <div class="metric-card"><div class="metric-value">${s.impressões ?? '-'}</div><div class="metric-label">Impressões</div></div>
-              <div class="metric-card"><div class="metric-value">${s.cliques ?? '-'}</div><div class="metric-label">Cliques</div></div>
-              <div class="metric-card"><div class="metric-value">${s.conversões ?? '-'}</div><div class="metric-label">Conversões</div></div>
-              <div class="metric-card"><div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div><div class="metric-label">Custo</div></div>
-              <div class="metric-card"><div class="metric-value">${s.ctr ?? '-'}%</div><div class="metric-label">CTR</div></div>
-              <div class="metric-card"><div class="metric-value">${s.taxaConversao ?? '-'}%</div><div class="metric-label">Taxa Conversão</div></div>
-              <div class="metric-card"><div class="metric-value">${s.custoPorConversao ?? '-'}</div><div class="metric-label">Custo/Conversão</div></div>
-            </div>`;
+              <div class="metric-card">
+                <div class="metric-value">${s.impressões ?? '-'}</div>
+                <div class="metric-label">Impressões (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.cliques ?? '-'}</div>
+                <div class="metric-label">Cliques (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.conversões ?? '-'}</div>
+                <div class="metric-label">Conversões (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">R$ ${s.custo !== undefined ? Number(s.custo).toFixed(2) : '-'}</div>
+                <div class="metric-label">Custo (Total)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.ctr ?? '-'}%</div>
+                <div class="metric-label">CTR Geral</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.taxaConversao ?? '-'}%</div>
+                <div class="metric-label">Taxa Conversão Geral</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${s.custoPorConversao ?? '-'}</div>
+                <div class="metric-label">Custo/Conversão Geral</div>
+              </div>
+            </div>
+
+            
           
           if (result.campaigns && result.campaigns.length) {
             html += `<div class="campaigns-container">
